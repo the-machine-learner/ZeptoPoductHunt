@@ -1,0 +1,911 @@
+/* ==========================================================================
+   ZEPTO PRODUCT HUNT - GLOBAL CSS & DESIGN SYSTEM
+   ========================================================================== */
+
+:root {
+  --zepto-green: #0c831f;
+  --zepto-green-light: #10b981;
+  --zepto-green-bg: #e6f4ea;
+  --zepto-pink: #ff3269;
+  --zepto-pink-hover: #e0285a;
+  --zepto-purple: #6366f1;
+  --zepto-purple-dark: #4f46e5;
+  --zepto-gold: #f59e0b;
+  --zepto-dark: #0f172a;
+  --zepto-gray-100: #f8fafc;
+  --zepto-gray-200: #f1f5f9;
+  --zepto-gray-300: #e2e8f0;
+  --zepto-gray-600: #475569;
+  --zepto-gray-800: #1e293b;
+  --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: 'Outfit', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: #0f172a;
+  color: var(--zepto-gray-800);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-x: hidden;
+}
+
+/* App Desktop Container */
+.app-viewport-container {
+  width: 100%;
+  max-width: 1200px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+/* Header & Controls Toolbar */
+.control-header {
+  width: 100%;
+  max-width: 480px;
+  background: rgba(30, 41, 59, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 12px 18px;
+  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  color: white;
+}
+
+.control-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  span {
+    background: linear-gradient(135deg, #10b981, #3b82f6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+.btn-tour-restart {
+  background: linear-gradient(135deg, var(--zepto-pink), #ec4899);
+  color: white;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.82rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 12px rgba(255, 50, 105, 0.4);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-tour-restart:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 50, 105, 0.6);
+}
+
+/* Mobile Phone Frame Simulator */
+.mobile-device-frame {
+  width: 390px;
+  height: 844px;
+  background: #ffffff;
+  border-radius: 48px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6), 0 0 0 12px #1e293b, 0 0 0 14px #334155;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 480px) {
+  body {
+    background-color: #ffffff;
+  }
+  .app-viewport-container {
+    padding: 0;
+  }
+  .control-header {
+    border-radius: 0;
+    margin-bottom: 0;
+  }
+  .mobile-device-frame {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
+
+/* Phone Status Bar */
+.status-bar {
+  height: 44px;
+  background: #0c831f;
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 24px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  z-index: 40;
+  position: relative;
+}
+
+.status-time {
+  font-weight: 700;
+  letter-spacing: -0.2px;
+}
+
+.status-icons {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+/* Dynamic Notch */
+.phone-notch {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 28px;
+  background: #000000;
+  border-radius: 20px;
+  z-index: 50;
+}
+
+/* Main Screen Viewport */
+.mobile-screen-body {
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+  background-color: var(--zepto-gray-100);
+  display: flex;
+  flex-direction: column;
+
+  /* Custom smooth scrollbar */
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+  }
+}
+
+/* Bottom Navigation Bar */
+.bottom-nav-bar {
+  height: 65px;
+  background: #ffffff;
+  border-top: 1px solid var(--zepto-gray-300);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding-bottom: 8px;
+  z-index: 30;
+  position: relative;
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  color: #64748b;
+  font-size: 0.68rem;
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s, transform 0.2s;
+  padding: 4px 8px;
+
+  svg {
+    width: 22px;
+    height: 22px;
+  }
+}
+
+.nav-item.active {
+  color: var(--zepto-green);
+}
+
+.nav-item.hunt-highlight {
+  color: var(--zepto-pink);
+  font-weight: 800;
+
+  .hunt-badge {
+    position: absolute;
+    top: -4px;
+    right: 2px;
+    background: var(--zepto-pink);
+    color: white;
+    font-size: 0.55rem;
+    padding: 1px 5px;
+    border-radius: 10px;
+    font-weight: 900;
+    box-shadow: 0 2px 6px rgba(255, 50, 105, 0.4);
+    animation: pulseGlow 1.5s infinite alternate;
+  }
+}
+
+@keyframes pulseGlow {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 50, 105, 0.7); }
+  100% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(255, 50, 105, 0); }
+}
+
+/* Home Screen Layout */
+.home-header {
+  background: linear-gradient(180deg, #0c831f 0%, #10b981 100%);
+  color: white;
+  padding: 12px 16px 16px 16px;
+  border-bottom-left-radius: 20px;
+  border-bottom-right-radius: 20px;
+}
+
+.location-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.eta-pill {
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(8px);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.address-text {
+  font-size: 0.78rem;
+  opacity: 0.95;
+  font-weight: 500;
+}
+
+.search-box-wrap {
+  position: relative;
+  margin-bottom: 12px;
+}
+
+.search-input {
+  width: 100%;
+  background: white;
+  border: none;
+  border-radius: 14px;
+  padding: 12px 14px 12px 42px;
+  font-size: 0.85rem;
+  color: var(--zepto-gray-800);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+}
+
+.pet-store-chip {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: #fef3c7;
+  color: #d97706;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 4px 8px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Category Filter Chips */
+.category-chips-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+
+  &::-webkit-scrollbar { display: none; }
+}
+
+.cat-chip {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &.active {
+    background: white;
+    color: var(--zepto-green);
+    font-weight: 700;
+  }
+
+  &.highlight-box {
+    border: 2px solid var(--zepto-pink);
+    box-shadow: 0 0 10px rgba(255, 50, 105, 0.6);
+  }
+}
+
+/* Home Grid & Steal Deals */
+.home-content-body {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.cat-card {
+  background: white;
+  border-radius: 14px;
+  padding: 10px 8px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.cat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+}
+
+.cat-card-img {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: #f1f5f9;
+}
+
+.cat-card-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--zepto-gray-800);
+  line-height: 1.1;
+}
+
+.cat-card-off {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--zepto-green);
+  background: var(--zepto-green-bg);
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.steal-deals-banner {
+  background: linear-gradient(135deg, #1e1b4b, #312e81);
+  color: white;
+  border-radius: 16px;
+  padding: 14px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 6px 16px rgba(49, 46, 129, 0.3);
+}
+
+/* Floating Hunt Entry Button */
+.floating-hunt-banner {
+  background: linear-gradient(135deg, var(--zepto-pink), #ec4899);
+  color: white;
+  padding: 12px 16px;
+  border-radius: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(255, 50, 105, 0.4);
+  margin-top: 4px;
+}
+
+/* Modal Bottom Sheet */
+.modal-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(6px);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  animation: fadeIn 0.3s forwards;
+}
+
+.modal-bottom-sheet {
+  background: #ffffff;
+  border-top-left-radius: 28px;
+  border-top-right-radius: 28px;
+  padding: 20px 20px 24px 20px;
+  max-height: 90%;
+  overflow-y: auto;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.25);
+  animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  position: relative;
+}
+
+.modal-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  background: var(--zepto-gray-200);
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748b;
+  font-weight: 700;
+}
+
+.modal-header-title {
+  text-align: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: var(--zepto-green);
+  letter-spacing: 0.5px;
+  margin-bottom: 14px;
+}
+
+/* Walkthrough Step Cards */
+.step-card {
+  background: var(--zepto-gray-100);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  border: 1px solid var(--zepto-gray-200);
+}
+
+.step-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.step-icon-1 { background: #dcfce7; color: #15803d; }
+.step-icon-2 { background: #f3e8ff; color: #7e22ce; }
+.step-icon-3 { background: #fee2e2; color: #b91c1c; }
+.step-icon-4 { background: #dbeafe; color: #1d4ed8; }
+
+.step-text-wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.step-num {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.step-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--zepto-gray-800);
+}
+
+.step-desc {
+  font-size: 0.73rem;
+  color: #64748b;
+  line-height: 1.3;
+}
+
+/* Modal Bottom Tab Navigator inside Modal */
+.modal-nav-bar {
+  display: flex;
+  justify-content: space-around;
+  background: var(--zepto-gray-100);
+  border-radius: 20px;
+  padding: 6px;
+  margin-top: 16px;
+}
+
+.modal-nav-tab {
+  flex: 1;
+  text-align: center;
+  padding: 8px 0;
+  border-radius: 16px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.modal-nav-tab.active {
+  background: white;
+  color: var(--zepto-green);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.pagination-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 14px;
+
+  span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #cbd5e1;
+  }
+  span.active {
+    width: 20px;
+    border-radius: 10px;
+    background: var(--zepto-green);
+  }
+}
+
+/* Clue Challenge Card */
+.level-progress-bar {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.level-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--zepto-gray-200);
+  color: #64748b;
+}
+
+.level-badge.done {
+  background: var(--zepto-green);
+  color: white;
+}
+
+.level-badge.current {
+  border: 2px solid var(--zepto-green);
+  color: var(--zepto-green);
+}
+
+.clue-box {
+  background: #f0fdf4;
+  border: 1.5px dashed #22c55e;
+  border-radius: 18px;
+  padding: 18px;
+  text-align: center;
+  margin-bottom: 14px;
+}
+
+.clue-riddle {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--zepto-gray-800);
+  line-height: 1.45;
+  font-style: italic;
+  margin-bottom: 14px;
+}
+
+.hint-pill-btn {
+  background: var(--zepto-green);
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Prize / Rewards Modal Card */
+.reward-card-purple {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  border-radius: 22px;
+  padding: 24px 20px;
+  text-align: center;
+  box-shadow: 0 10px 25px rgba(99, 102, 241, 0.35);
+}
+
+.prize-title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 900;
+  margin: 10px 0 6px 0;
+}
+
+.unlock-now-btn {
+  background: white;
+  color: #4f46e5;
+  border: none;
+  width: 100%;
+  padding: 12px;
+  border-radius: 14px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  margin-top: 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Product Detail Page (PDP) */
+.pdp-image-box {
+  background: white;
+  padding: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+
+  img {
+    max-width: 220px;
+    height: auto;
+    object-fit: contain;
+  }
+}
+
+.rating-badge {
+  position: absolute;
+  bottom: 12px;
+  left: 16px;
+  background: #f1f5f9;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--zepto-gray-800);
+}
+
+.pdp-info-card {
+  background: white;
+  padding: 16px;
+  margin-top: 8px;
+}
+
+.pdp-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--zepto-gray-800);
+  margin-bottom: 8px;
+}
+
+.pdp-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.price-main {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: var(--zepto-gray-800);
+}
+
+.price-off {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--zepto-green);
+  background: var(--zepto-green-bg);
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.sticky-bottom-add {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  padding: 12px 16px;
+  border-top: 1px solid var(--zepto-gray-200);
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  z-index: 30;
+}
+
+.btn-add-cart-pink {
+  flex: 1;
+  background: var(--zepto-pink);
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 14px;
+  font-size: 0.92rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(255, 50, 105, 0.4);
+  transition: transform 0.15s;
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+/* Cart Screen & Progress Card */
+.cart-hunt-card {
+  background: #f0fdf4;
+  border: 1.5px solid #22c55e;
+  border-radius: 18px;
+  padding: 14px;
+  margin: 14px 0;
+  text-align: center;
+}
+
+.coupon-code-badge {
+  background: #22c55e;
+  color: white;
+  padding: 6px 14px;
+  border-radius: 10px;
+  font-weight: 900;
+  font-size: 0.82rem;
+  letter-spacing: 0.5px;
+  display: inline-block;
+  margin: 8px 0;
+  box-shadow: 0 3px 8px rgba(34, 197, 94, 0.3);
+}
+
+/* GUIDED TUTORIAL OVERLAY */
+.tutorial-overlay-mask {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.82);
+  z-index: 200;
+  pointer-events: auto;
+}
+
+.tutorial-tooltip-card {
+  position: absolute;
+  background: white;
+  border-radius: 20px;
+  padding: 18px;
+  width: calc(100% - 32px);
+  left: 16px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35);
+  z-index: 220;
+  border: 2px solid var(--zepto-green);
+  animation: bounceIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.tutorial-step-badge {
+  background: var(--zepto-green-bg);
+  color: var(--zepto-green);
+  font-size: 0.7rem;
+  font-weight: 900;
+  padding: 3px 8px;
+  border-radius: 10px;
+  display: inline-block;
+  margin-bottom: 6px;
+}
+
+.tutorial-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--zepto-gray-800);
+  margin-bottom: 4px;
+}
+
+.tutorial-desc {
+  font-size: 0.78rem;
+  color: #475569;
+  line-height: 1.4;
+  margin-bottom: 14px;
+}
+
+.tutorial-btn-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.btn-tut-skip {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-tut-next {
+  background: var(--zepto-green);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(12, 131, 31, 0.3);
+}
+
+.highlight-cutout {
+  position: absolute;
+  border-radius: 16px;
+  border: 3px solid var(--zepto-pink);
+  box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.82), 0 0 20px rgba(255, 50, 105, 0.9);
+  z-index: 210;
+  pointer-events: none;
+  animation: pulseTarget 1.5s infinite alternate;
+}
+
+@keyframes pulseTarget {
+  0% { transform: scale(1); border-color: var(--zepto-pink); }
+  100% { transform: scale(1.03); border-color: #22c55e; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes bounceIn {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}

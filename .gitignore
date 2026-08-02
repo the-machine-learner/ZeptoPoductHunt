@@ -1,0 +1,14 @@
+# Node / Build outputs
+node_modules/
+dist/
+build/
+.DS_Store
+
+# Streamlit / Python
+.streamlit/
+__pycache__/
+*.pyc
+*.pyo
+
+# Logs
+*.log
