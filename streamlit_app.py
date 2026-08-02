@@ -59,7 +59,7 @@ st.sidebar.info("""
 **Interactive Flow Steps:**
 1. **Screen 1 (Home)**: Tap **🔥 Hunt** at bottom right or browse categories.
 2. **Screen 2 (Walkthrough)**: View 4-step game rules.
-3. **Screen 3 (Clue Challenge)**: Read Level 3 riddle (*"I test friendships, press your buttons..."*).
+3. **Screen 3 (Clue Challenge)**: Read Clue 3 riddle (*"I test friendships, press your buttons..."*).
 4. **Screen 4 (Rewards)**: Check Prize ₹50 OFF.
 5. **Screen 5 (Category)**: Browse real products with stock photos.
 6. **Screen 6 (PDP)**: Open Zebronics MAX FURY RGB Gamepad & tap **Add to Cart**.
@@ -319,10 +319,10 @@ raw_html_template = """
       .carousel-dot { width: 6px; height: 6px; border-radius: 50%; background: #cbd5e1; cursor: pointer; }
       .carousel-dot.active { background: #0c831f; width: 14px; border-radius: 4px; }
 
-      .level-progress-bar { display: flex; justify-content: center; gap: 8px; margin-bottom: 10px; }
-      .level-badge { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 700; background: var(--zepto-gray-200); color: #64748b; }
-      .level-badge.done { background: var(--zepto-green); color: white; }
-      .level-badge.current { border: 2px solid var(--zepto-green); color: var(--zepto-green); }
+      .clue-progress-bar { display: flex; justify-content: center; gap: 8px; margin-bottom: 10px; }
+      .clue-badge { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 700; background: var(--zepto-gray-200); color: #64748b; }
+      .clue-badge.done { background: var(--zepto-green); color: white; }
+      .clue-badge.current { border: 2px solid var(--zepto-green); color: var(--zepto-green); }
 
       .clue-box { background: #f0fdf4; border: 1.5px dashed #22c55e; border-radius: 14px; padding: 12px; text-align: center; margin-bottom: 10px; }
       .clue-riddle { font-size: 0.78rem; font-weight: 600; color: var(--zepto-gray-800); line-height: 1.35; font-style: italic; margin-bottom: 8px; }
@@ -505,13 +505,13 @@ raw_html_template = """
           switch (tutorialStep) {
             case 1: return { title: "Step 1: Open Product Hunt", description: "Tap the highlighted 'Hunt' icon at the bottom right to enter Product Hunt Week!", buttonText: "Open Hunt →", tooltipBottom: 65, onAction: () => { setShowModal(true); setModalTab('walkthrough'); setTutorialStep(2); } };
             case 2: return { title: "Step 2: Walkthrough (How It Works)", description: "Review 4-step game rules: Buy Products → Unlock Clues → Find Item → Get Discount!", buttonText: "View Clue →", tooltipBottom: 130, onAction: () => { setModalTab('clues'); setTutorialStep(3); } };
-            case 3: return { title: "Step 3: Read Spicy AI Clue", description: "Level 3 Challenge: 'I test friendships, press your buttons... next to your TV.' Hint: Gaming!", buttonText: "Check Rewards →", tooltipBottom: 130, onAction: () => { setModalTab('rewards'); setTutorialStep(4); } };
+            case 3: return { title: "Step 3: Read Spicy AI Clue", description: "Clue 3 Challenge: 'I test friendships, press your buttons... next to your TV.' Hint: Gaming!", buttonText: "Check Rewards →", tooltipBottom: 130, onAction: () => { setModalTab('rewards'); setTutorialStep(4); } };
             case 4: return { title: "Step 4: Check Prize", description: "Prize: ₹50 OFF Coupon code for your cart when you find & add the secret item!", buttonText: "Go Hunt Item →", tooltipBottom: 130, onAction: () => { setShowModal(false); setScreen('home'); setTutorialStep(5); } };
             case 5: return { title: "Step 5: Browse Category", description: "Navigate to Gaming where the products are located.", buttonText: "Go to Gaming →", tooltipTop: 130, onAction: () => { setScreen('category'); setSelectedCategory('Gaming'); setTutorialStep(6); } };
             case 6: return { title: "Step 6: Try Non-Hunt Item (Mouse)", description: "Select Logitech G305 Wireless Mouse to test adding a normal product.", buttonText: "Open Mouse →", tooltipBottom: 65, onAction: () => { setSelectedProduct(PRODUCTS[2]); setScreen('pdp'); setTutorialStep(7); } };
             case 7: return { title: "Step 7: Add Mouse to Cart", description: "Tap 'Add to Cart'. Notice that the coupon will remain 🔒 LOCKED because this is not the hunt item!", buttonText: "Add Mouse →", tooltipBottom: 65, onAction: () => { setCartCount(1); setScreen('cart'); setTutorialStep(8); } };
             case 8: return { title: "Step 8: Coupon Remains Locked 🔒", description: "Notice ACCZ50OFF is 🔒 LOCKED (Full price ₹4,295). Now let's go back & find the real secret hunt item!", buttonText: "Find Secret Item →", tooltipTop: 80, onAction: () => { setScreen('category'); setTutorialStep(9); } };
-            case 9: return { title: "Step 9: Select Secret Hunt Item", description: "Select Zebronics MAX FURY RGB Gamepad (the item matching the Level 3 AI clue!).", buttonText: "Open Gamepad →", tooltipBottom: 65, onAction: () => { setSelectedProduct(PRODUCTS[0]); setScreen('pdp'); setTutorialStep(10); } };
+            case 9: return { title: "Step 9: Select Secret Hunt Item", description: "Select Zebronics MAX FURY RGB Gamepad (the item matching Clue 3!).", buttonText: "Open Gamepad →", tooltipBottom: 65, onAction: () => { setSelectedProduct(PRODUCTS[0]); setScreen('pdp'); setTutorialStep(10); } };
             case 10: return { title: "Step 10: Add Secret Item to Cart", description: "Tap 'Add to Cart' to complete the Hunt and unlock your secret discount!", buttonText: "Add Gamepad →", tooltipBottom: 65, onAction: () => { setCartCount(1); setHuntUnlocked(true); setScreen('cart'); setTutorialStep(11); triggerConfetti(); } };
             case 11: return { title: "Step 11: Coupon ACCZ50OFF Unlocked! 🎉", description: "Boom! Discovered Deal (-₹919) + Coupon ACCZ50OFF (-₹50) unlocked! Total: ₹1,030!", buttonText: "Finish Tour 🚀", tooltipTop: 80, onAction: () => { setTutorialStep(0); } };
             default: return null;
@@ -813,7 +813,7 @@ raw_html_template = """
                       )}
                       {(huntUnlocked || selectedProduct.isHuntItem) && (
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.58rem', color: '#16a34a', marginBottom: '2px' }}>
-                          <span>Hunt Level 3 Coupon (ACCZ50OFF)</span>
+                          <span>Hunt Clue 3 Coupon (ACCZ50OFF)</span>
                           <span>-₹50</span>
                         </div>
                       )}
@@ -834,10 +834,10 @@ raw_html_template = """
 
                     {/* Product Hunt Card */}
                     <div className="cart-hunt-card" id="cart-hunt-card-target" style={{ margin: '4px 10px 10px 10px', padding: '8px' }}>
-                      <div className="level-progress-bar" style={{ marginBottom: '4px' }}>
-                        <div className="level-badge done">✓</div>
-                        <div className="level-badge done">✓</div>
-                        <div className={`level-badge ${huntUnlocked || selectedProduct.isHuntItem ? 'done' : 'current'}`} style={{ background: (huntUnlocked || selectedProduct.isHuntItem) ? '#22c55e' : undefined }}>
+                      <div className="clue-progress-bar" style={{ marginBottom: '4px' }}>
+                        <div className="clue-badge done">✓</div>
+                        <div className="clue-badge done">✓</div>
+                        <div className={`clue-badge ${huntUnlocked || selectedProduct.isHuntItem ? 'done' : 'current'}`} style={{ background: (huntUnlocked || selectedProduct.isHuntItem) ? '#22c55e' : undefined }}>
                           {(huntUnlocked || selectedProduct.isHuntItem) ? '✓' : '3'}
                         </div>
                       </div>
@@ -845,11 +845,11 @@ raw_html_template = """
                         {(huntUnlocked || selectedProduct.isHuntItem) ? 'COUPON CODE: ACCZ50OFF' : 'COUPON CODE: ACCZ**** (LOCKED)'}
                       </div>
                       <div style={{ fontSize: '0.85rem', fontWeight: 900, color: (huntUnlocked || selectedProduct.isHuntItem) ? '#15803d' : '#ea580c' }}>
-                        {(huntUnlocked || selectedProduct.isHuntItem) ? 'Congratulations !!! 🎉' : '🎯 Level 3 Hunt In Progress'}
+                        {(huntUnlocked || selectedProduct.isHuntItem) ? 'Congratulations !!! 🎉' : '🎯 Clue 3 Hunt In Progress'}
                       </div>
                       <div style={{ fontSize: '0.62rem', color: (huntUnlocked || selectedProduct.isHuntItem) ? '#166534' : '#475569' }}>
                         {(huntUnlocked || selectedProduct.isHuntItem)
-                          ? 'Level 3 Complete! You unlocked ₹50 OFF + Free Delivery on this order.'
+                          ? 'Clue 3 Complete! You unlocked ₹50 OFF + Free Delivery on this order.'
                           : 'Find the secret item in Gaming & add to cart to unlock ₹50 OFF coupon!'}
                       </div>
                     </div>
@@ -896,13 +896,13 @@ raw_html_template = """
 
                           {walkthroughSlide === 2 && (
                             <div>
-                              <div className="level-progress-bar">
-                                <div className="level-badge done">✓</div>
-                                <div className="level-badge done">✓</div>
-                                <div className="level-badge current">3</div>
-                                <div className="level-badge">🔒</div>
+                              <div className="clue-progress-bar">
+                                <div className="clue-badge done">✓</div>
+                                <div className="clue-badge done">✓</div>
+                                <div className="clue-badge current">3</div>
+                                <div className="clue-badge">🔒</div>
                               </div>
-                              <div style={{ fontSize: '0.58rem', fontWeight: 900, color: '#16a34a', textAlign: 'center', marginBottom: '2px' }}>LEVEL 3: THE GHOST IN THE LIVING ROOM</div>
+                              <div style={{ fontSize: '0.58rem', fontWeight: 900, color: '#16a34a', textAlign: 'center', marginBottom: '2px' }}>CLUE 3: THE GHOST IN THE LIVING ROOM</div>
                               <div style={{ fontSize: '0.82rem', fontWeight: 900, textAlign: 'center', marginBottom: '10px' }}>Current Challenge</div>
 
                               <div className="clue-box">
@@ -933,26 +933,26 @@ raw_html_template = """
                       {modalTab === 'clues' && (
                         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
                           <div style={{ overflowY: 'auto' }}>
-                            <div className="level-progress-bar">
-                              <div className="level-badge done">✓</div>
-                              <div className="level-badge done">✓</div>
-                              <div className="level-badge current">3</div>
-                              <div className="level-badge">🔒</div>
+                            <div className="clue-progress-bar">
+                              <div className="clue-badge done">✓</div>
+                              <div className="clue-badge done">✓</div>
+                              <div className="clue-badge current">3</div>
+                              <div className="clue-badge">🔒</div>
                             </div>
                             <div style={{ fontSize: '0.62rem', fontWeight: 900, color: '#16a34a', textAlign: 'center', marginBottom: '6px' }}>MY UNLOCKED CLUES</div>
 
                             <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '6px 10px', marginBottom: '6px' }}>
-                              <div style={{ fontSize: '0.58rem', fontWeight: 900, color: '#16a34a' }}>✓ LEVEL 1 CLUE UNLOCKED</div>
+                              <div style={{ fontSize: '0.58rem', fontWeight: 900, color: '#16a34a' }}>✓ CLUE 1 UNLOCKED</div>
                               <div style={{ fontSize: '0.65rem', fontStyle: 'italic', color: '#334155' }}>"Looking for crunch? Check snack aisles..."</div>
                             </div>
 
                             <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '6px 10px', marginBottom: '6px' }}>
-                              <div style={{ fontSize: '0.58rem', fontWeight: 900, color: '#16a34a' }}>✓ LEVEL 2 CLUE UNLOCKED</div>
+                              <div style={{ fontSize: '0.58rem', fontWeight: 900, color: '#16a34a' }}>✓ CLUE 2 UNLOCKED</div>
                               <div style={{ fontSize: '0.65rem', fontStyle: 'italic', color: '#334155' }}>"Need fresh greens? Check fruits & veg..."</div>
                             </div>
 
                             <div className="clue-box" style={{ margin: '4px 0 0 0', padding: '8px 10px' }}>
-                              <div style={{ fontSize: '0.55rem', fontWeight: 900, color: '#c2410c', marginBottom: '2px' }}>🎯 LEVEL 3 ACTIVE CHALLENGE</div>
+                              <div style={{ fontSize: '0.55rem', fontWeight: 900, color: '#c2410c', marginBottom: '2px' }}>🎯 CLUE 3 ACTIVE CHALLENGE</div>
                               <p className="clue-riddle" style={{ fontSize: '0.68rem', margin: '3px 0' }}>"I test friendships, press your buttons, and turn grown adults into yelling kids at 2 AM. I live right next to your TV. What am I?"</p>
                               <div className="hint-pill-btn" style={{ display: 'inline-block', fontSize: '0.58rem', padding: '2px 8px' }}>Hint: Check Gaming</div>
                             </div>

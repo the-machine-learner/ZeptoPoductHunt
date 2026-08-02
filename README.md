@@ -6,15 +6,15 @@
 
 ## 🌟 Features & Highlights
 
-- **🎯 Gamified 3-Level Progressive Hunt**
-  - **Level 1 & Level 2**: Past unlocked clues guiding users across categories.
-  - **Level 3 Active Challenge**: Spicy AI riddle challenge (*"I test friendships, press your buttons... next to your TV."*).
+- **🎯 Gamified Progressive Clue Hunt**
+  - **Clue 1 & Clue 2**: Past unlocked clues guiding users across categories.
+  - **Clue 3 Active Challenge**: Spicy AI riddle challenge (*"I test friendships, press your buttons... next to your TV."*).
 - **🛍️ Mystery Product Discovery (No Spoilers)**
   - Catalog and PDP screens display **regular undiscounted prices** with zero explicit spoiler tags.
   - Users independently deduce secret items via clues.
 - **🔐 Dynamic Reward & Coupon Unlocking**
   - **Locked State**: Adding regular non-hunt items keeps the coupon `ACCZ50OFF` **🔒 LOCKED**.
-  - **Unlocked State**: Adding the secret Hunt item (**Zebronics MAX FURY RGB Gamepad**) completes Level 3, unlocking:
+  - **Unlocked State**: Adding the secret Hunt item (**Zebronics MAX FURY RGB Gamepad**) completes Clue 3, unlocking:
     - **Discovered Deal**: ₹1,999 ➔ ₹1,080 (-₹919)
     - **Coupon `ACCZ50OFF`**: Extra -₹50 OFF
     - **Final Payment**: **₹1,030** with celebratory confetti! 🎉
