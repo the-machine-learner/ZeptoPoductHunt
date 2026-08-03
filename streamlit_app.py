@@ -136,38 +136,12 @@ else:
             st.session_state.demo_key += 1
             st.rerun()
 
-st.sidebar.markdown("---")
-st.sidebar.markdown("### 🔄 Continuous AI Gameplay Loop")
-st.sidebar.caption("Simulate purchases to trigger progressive AI clue generation:")
-
-curr_stage = st.session_state.session_data['hunt_stage']
-
-if curr_stage == 1:
-    if st.sidebar.button("🛒 Complete Purchase #1 (Unlock Clue 2)", use_container_width=True):
-        with st.spinner("⚡ AI Generating Clue 2 (Simpler Hint)..."):
-            st.session_state.session_data = advance_gameplay_stage(st.session_state.session_data, 2)
-            st.session_state.demo_key += 1
-            st.rerun()
-
-elif curr_stage == 2:
-    if st.sidebar.button("🛒 Complete Purchase #2 (Unlock Clue 3)", use_container_width=True):
-        with st.spinner("⚡ AI Generating Clue 3 (Direct Actionable Clue)..."):
-            st.session_state.session_data = advance_gameplay_stage(st.session_state.session_data, 3)
-            st.session_state.demo_key += 1
-            st.rerun()
-
-else:
-    st.sidebar.success("🎉 All 3 Hunt Stages Completed!")
-    if st.sidebar.button("🔄 Reset Hunt Session", use_container_width=True):
-        st.session_state.session_data = init_backend_session(st.session_state.session_data['persona_key'], st.session_state.session_data['entry_flow'])
-        st.session_state.demo_key += 1
-        st.rerun()
-
 # ---------------------------------------------------------
 # AI INSPECTOR & METADATA PANEL
 # ---------------------------------------------------------
 st.sidebar.markdown("---")
 with st.sidebar.expander("⚡ Groq AI Live Inspector", expanded=False):
+    curr_stage = st.session_state.session_data['hunt_stage']
     latest_clue = st.session_state.session_data['clues'].get(curr_stage, {})
     st.markdown(f"**Model**: `{latest_clue.get('model', 'llama-3.3-70b-versatile')}`")
     st.markdown(f"**Latency**: `{latest_clue.get('latency_ms', 0)} ms`")
