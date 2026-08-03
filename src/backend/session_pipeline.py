@@ -1,5 +1,6 @@
 """
 Shared Backend Initialization Pipeline & Gameplay Progression Controller.
+Keeps Secret Hunt Product fixed per persona while generating progressively simpler clues (Clue 1 -> 2 -> 3).
 """
 
 from src.database.personas import PERSONAS
@@ -8,14 +9,14 @@ from src.backend.groq_client import generate_ai_clue
 
 def init_backend_session(persona_key, flow_name="flow2_profile"):
     """
-    Shared Backend Initialization Endpoint invoked by both Entry Flow 1 and Flow 2.
-    Loads profile, reads purchase history, identifies target, and invokes Groq AI.
+    Shared Backend Initialization Endpoint.
+    Loads profile, sets single Secret Hunt Product for the persona, and generates Clue 1 via Groq.
     """
     persona = PERSONAS[persona_key]
-    target_id = persona['target_sequence'][0]
+    target_id = persona['target_product_id']
     target_prod = PRODUCTS_MASTER[target_id]
     
-    # Generate Clue 1 via Groq
+    # Generate Clue 1 (Clever Riddle - Less Helpful)
     clue_1 = generate_ai_clue(persona, target_prod, 1, persona['purchase_history'])
     
     session_data = {
@@ -34,26 +35,13 @@ def init_backend_session(persona_key, flow_name="flow2_profile"):
 def advance_gameplay_stage(session_data, next_stage_num):
     """
     Continuous AI Gameplay Loop trigger.
-    Updates purchase history, selects next target, and invokes Groq LLM for Clue 2 / Clue 3.
+    Updates purchase history and generates progressively simpler clue (Clue 2 or 3) for the SAME target product.
     """
     persona = session_data['persona']
-    # Add previous target product to purchase history
-    prev_target_prod = session_data['target_prod']
-    session_data['purchase_history'].append(prev_target_prod['name'])
+    target_prod = session_data['target_prod']
+    session_data['hunt_stage'] = next_stage_num
     
-    # Select next target
-    target_idx = next_stage_num - 1
-    if target_idx < len(persona['target_sequence']):
-        next_target_id = persona['target_sequence'][target_idx]
-        next_target_prod = PRODUCTS_MASTER[next_target_id]
-        session_data['target_id'] = next_target_id
-        session_data['target_prod'] = next_target_prod
-        session_data['hunt_stage'] = next_stage_num
-        
-        # Generate next AI clue with progressive difficulty
-        next_clue = generate_ai_clue(persona, next_target_prod, next_stage_num, session_data['purchase_history'])
-        session_data['clues'][next_stage_num] = next_clue
-    else:
-        session_data['completed'] = True
-
+    # Generate next clue for SAME target product with progressive simplification
+    next_clue = generate_ai_clue(persona, target_prod, next_stage_num, session_data['purchase_history'])
+    session_data['clues'][next_stage_num] = next_clue
     return session_data

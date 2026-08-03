@@ -12,7 +12,7 @@ import json
 
 from src.database.personas import PERSONAS
 from src.database.products import PRODUCTS_MASTER
-from src.backend.groq_client import generate_ai_clue
+from src.backend.groq_client import generate_ai_clue, get_groq_api_key
 from src.backend.session_pipeline import init_backend_session, advance_gameplay_stage
 from src.frontend.react_app import render_react_mobile_app
 
@@ -55,6 +55,21 @@ st.markdown("""
         display: block !important;
         margin: 0 auto !important;
         border: none !important;
+    }
+    /* Fix Sidebar Dropdown & Label Left Padding */
+    div[data-testid="stSidebar"] div[data-baseweb="select"] > div {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+        border-radius: 8px !important;
+    }
+    div[data-testid="stSidebar"] div[data-baseweb="select"] [data-testid="stMarkdownContainer"] p {
+        font-size: 0.86rem !important;
+        font-weight: 600 !important;
+    }
+    div[data-testid="stSidebar"] label p {
+        font-size: 0.85rem !important;
+        font-weight: 700 !important;
+        margin-bottom: 4px !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -110,9 +125,9 @@ else:
     )
     
     p_info = PERSONAS[selected_p_key]
-    st.sidebar.caption(f"**Bio**: {p_info['demographics']}")
-    st.sidebar.caption(f"**Past Buys**: {', '.join(p_info['purchase_history'])}")
-    st.sidebar.caption(f"**AI Tone**: {p_info['tone']}")
+    st.sidebar.markdown(f"**Past Buys**: {', '.join(p_info['purchase_history'])}")
+    st.sidebar.markdown(f"**AI Tone**: {p_info['tone']}")
+    st.sidebar.markdown(f"**Suggested categories**: {', '.join(p_info['suggested_categories'])}")
 
     if st.sidebar.button("🚀 Launch Profile Hunt (AI)", use_container_width=True, type="primary"):
         with st.spinner(f"⚡ AI Crafting personalized clue for {p_info['name']}..."):
@@ -175,7 +190,8 @@ react_session_payload = {
     'target_prod': s_data['target_prod'],
     'clue': curr_clue,
     'clues_history': s_data['clues'],
-    'products': catalog_prods
+    'products': catalog_prods,
+    'groq_api_key': get_groq_api_key()
 }
 
 # Render React Mobile UI Application

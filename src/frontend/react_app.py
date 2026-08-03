@@ -329,9 +329,14 @@ RAW_HTML_TEMPLATE = """
         const [tutorialStep, setTutorialStep] = useState('__DEMO_MODE__' === 'tour' ? 1 : 0);
         const [targetRect, setTargetRect] = useState(null);
 
-        const currentTargetId = session.target_prod.id;
-        const liveClue = session.clue;
-        const currentStage = session.hunt_stage;
+        const [currentStage, setCurrentStage] = useState(session.hunt_stage || 1);
+        const [targetProd, setTargetProd] = useState(session.target_prod);
+        const [liveClue, setLiveClue] = useState((session.clues_history && session.clues_history[session.hunt_stage || 1]) || session.clue);
+        const [orderToast, setOrderToast] = useState(null);
+        const [isGeneratingNextClue, setIsGeneratingNextClue] = useState(false);
+        const [purchaseHistory, setPurchaseHistory] = useState(session.purchase_history || []);
+
+        const currentTargetId = targetProd.id;
 
         useEffect(() => {
           if (tutorialStep <= 0) { setTargetRect(null); return; }
@@ -367,7 +372,7 @@ RAW_HTML_TEMPLATE = """
           switch (tutorialStep) {
             case 1: return { title: "Step 1: Open Product Hunt", description: `Welcome ${session.persona.name}! Tap 'Hunt' to view your AI-generated riddle clue.`, buttonText: "Open Hunt →", tooltipBottom: 65, onAction: () => { setShowModal(true); setModalTab('walkthrough'); setTutorialStep(2); } };
             case 2: return { title: "Step 2: Walkthrough (How It Works)", description: "Review 4-step game rules: Buy Products → Unlock Clues → Find Item → Get Discount!", buttonText: "View Clue →", tooltipBottom: 130, onAction: () => { setModalTab('clues'); setTutorialStep(3); } };
-            case 3: return { title: `Step 3: Read AI Clue #${currentStage}`, description: `AI Clue: "${liveClue.riddle}" (${liveClue.hint})`, buttonText: "Check Rewards →", tooltipBottom: 130, onAction: () => { setModalTab('rewards'); setTutorialStep(4); } };
+            case 3: return { title: `Step 3: Read AI Clue #${currentStage}`, description: `AI Clue: "${liveClue.riddle}"`, buttonText: "Check Rewards →", tooltipBottom: 130, onAction: () => { setModalTab('rewards'); setTutorialStep(4); } };
             case 4: return { title: "Step 4: Check Prize", description: "Prize: ₹50 OFF Coupon code for your cart when you find & add the secret item!", buttonText: "Go Hunt Item →", tooltipBottom: 130, onAction: () => { setShowModal(false); setScreen('home'); setTutorialStep(5); } };
             case 5: return { title: `Step 5: Browse Category`, description: `Navigate to ${session.target_prod.category} where your target product is located.`, buttonText: `Go to ${session.target_prod.category} →`, tooltipTop: 130, onAction: () => { setScreen('category'); setSelectedCategory(session.target_prod.category); setTutorialStep(6); } };
             case 6: return { title: "Step 6: Try Non-Hunt Item (Mouse)", description: "Select Logitech G305 Mouse to test adding a normal product.", buttonText: "Open Mouse →", tooltipBottom: 65, onAction: () => { const mouseP = session.products.find(p => p.id === 'mouse') || session.products[0]; setSelectedProduct(mouseP); setScreen('pdp'); setTutorialStep(7); } };
@@ -401,19 +406,6 @@ RAW_HTML_TEMPLATE = """
                 {screen === 'home' && (
                   <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
                     <div className="home-header">
-                      <div className="persona-header-banner">
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ fontSize: '1.2rem' }}>{session.persona.avatar}</span>
-                          <div>
-                            <div style={{ fontSize: '0.75rem', fontWeight: 800 }}>{session.persona.name}</div>
-                            <div style={{ fontSize: '0.58rem', opacity: 0.9 }}>{session.persona.title}</div>
-                          </div>
-                        </div>
-                        <div style={{ background: 'rgba(255,255,255,0.25)', padding: '2px 6px', borderRadius: '8px', fontSize: '0.58rem', fontWeight: 800 }}>
-                          {session.entry_flow === 'flow1_tutorial' ? '🎓 DEMO TOUR' : '⚡ AI PERSONA'}
-                        </div>
-                      </div>
-
                       <div className="location-bar">
                         <div>
                           <div style={{ fontSize: '0.52rem', opacity: 0.8, fontWeight: 700 }}>DELIVERING TO</div>
@@ -450,11 +442,17 @@ RAW_HTML_TEMPLATE = """
                     </div>
 
                     <div className="home-content-body">
+                      {orderToast && (
+                        <div style={{ background: '#0c831f', color: 'white', padding: '8px 10px', borderRadius: '10px', fontSize: '0.72rem', fontWeight: 800, textAlign: 'center', boxShadow: '0 4px 12px rgba(12, 131, 31, 0.45)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span>{orderToast}</span>
+                          <span style={{ cursor: 'pointer', fontWeight: 900, fontSize: '0.8rem', marginLeft: '6px' }} onClick={() => setOrderToast(null)}>✕</span>
+                        </div>
+                      )}
                       <div className="floating-hunt-banner" onClick={() => { setShowModal(true); setModalTab('walkthrough'); if(tutorialStep===1) setTutorialStep(2); }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <span style={{ fontSize: '1.3rem' }}>🎯</span>
                           <div>
-                            <div style={{ fontSize: '0.58rem', fontWeight: 800, opacity: 0.9 }}>GROQ LLM GENERATED • CLUE #{currentStage}</div>
+                            <div style={{ fontSize: '0.58rem', fontWeight: 800, opacity: 0.9 }}>CLUE #{currentStage}</div>
                             <div style={{ fontSize: '0.82rem', fontWeight: 900 }}>{liveClue.clue_title || "PRODUCT HUNT WEEK"}</div>
                           </div>
                         </div>
@@ -554,9 +552,10 @@ RAW_HTML_TEMPLATE = """
                         onClick={() => {
                           setCartCount(1);
                           const isTarget = selectedProduct.id === currentTargetId;
-                          if (isTarget) {
+                          if (isTarget && !huntUnlocked) {
                             setHuntUnlocked(true);
                             triggerConfetti();
+                            setOrderToast(`🎉 Secret Target Found! ₹50 OFF Coupon ACCZ50OFF Unlocked!`);
                           }
                           setScreen('cart');
                           if (selectedProduct.id === 'mouse' && tutorialStep === 7) setTutorialStep(8);
@@ -626,7 +625,105 @@ RAW_HTML_TEMPLATE = """
                         <span>To Pay</span>
                         <span>₹{huntUnlocked ? (selectedProduct.price > 1000 ? 1030 : selectedProduct.price - 50).toLocaleString() : (selectedProduct ? selectedProduct.price.toLocaleString() : 0)}</span>
                       </div>
-                      <button style={{ width: '100%', background: '#0c831f', color: 'white', border: 'none', padding: '10px', borderRadius: '10px', fontWeight: 900, marginTop: '8px', fontSize: '0.82rem', cursor: 'pointer' }}>
+                      <button
+                        style={{ width: '100%', background: '#0c831f', color: 'white', border: 'none', padding: '10px', borderRadius: '10px', fontWeight: 900, marginTop: '8px', fontSize: '0.82rem', cursor: 'pointer' }}
+                        onClick={async () => {
+                          const isTargetBought = selectedProduct && selectedProduct.id === currentTargetId;
+                          const boughtName = selectedProduct ? selectedProduct.name : 'Item';
+                          setCartCount(0);
+                          setScreen('home');
+
+                          if (currentStage < 3) {
+                            const nextStage = currentStage + 1;
+                            const nextTarget = session.target_prod;
+                            const updatedHistory = [...purchaseHistory, boughtName];
+                            setPurchaseHistory(updatedHistory);
+
+                            // Enter Live Groq AI Loading State for Next Clue
+                            setIsGeneratingNextClue(true);
+
+                            try {
+                              const apiKey = session.groq_api_key;
+                              if (apiKey) {
+                                const diffRule = nextStage === 2 
+                                  ? "Clue 2 (Simpler Hint): Make this clue SIMPLER and MORE HELPFUL. Give a clear hint about its product category, shape, or daily usage benefit."
+                                  : "Clue 3 (Direct Actionable Clue): Make this clue VERY DIRECT and EASY TO SOLVE. Explicitly point the user to the exact aisle/category!";
+                                
+                                const prompt = `You are the AI Game Engine for Zepto Product Hunt Week.
+Generate a personalized, witty riddle clue for the customer.
+
+USER PROFILE:
+- Name: ${session.persona.name} (${session.persona.title})
+- Demographics: ${session.persona.demographics}
+- Tone Preference: ${session.persona.tone}
+- Current Purchase History: ${updatedHistory.join(', ')}
+- Suggested Adjacent Categories: ${(session.persona.suggested_categories || []).join(', ')}
+
+TARGET PRODUCT FOR THIS HUNT STAGE:
+- Name: ${nextTarget.name}
+- Category: ${nextTarget.category}
+- Description: ${nextTarget.desc}
+
+CLUE PROGRESSION STAGE:
+- Clue Number: ${nextStage} of 3
+- Rule: ${diffRule}
+
+STRICT JSON OUTPUT FORMAT (Return ONLY valid JSON):
+{
+  "clue_title": "Short 3-5 word catchphrase in ALL CAPS",
+  "riddle": "1-2 sentence witty riddle matching the user tone",
+  "hint": "Short 2-4 word category hint"
+}`;
+
+                                const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                                  method: "POST",
+                                  headers: {
+                                    "Authorization": `Bearer ${apiKey}`,
+                                    "Content-Type": "application/json"
+                                  },
+                                  body: JSON.stringify({
+                                    model: "llama-3.1-8b-instant",
+                                    messages: [{ role: "user", content: prompt }],
+                                    temperature: 0.7,
+                                    response_format: { type: "json_object" }
+                                  })
+                                });
+
+                                if (res.ok) {
+                                  const data = await res.json();
+                                  const parsed = JSON.parse(data.choices[0].message.content);
+                                  setLiveClue(parsed);
+                                } else if (session.clues_history && session.clues_history[nextStage]) {
+                                  setLiveClue(session.clues_history[nextStage]);
+                                }
+                              } else if (session.clues_history && session.clues_history[nextStage]) {
+                                setLiveClue(session.clues_history[nextStage]);
+                              }
+                            } catch (err) {
+                              if (session.clues_history && session.clues_history[nextStage]) {
+                                setLiveClue(session.clues_history[nextStage]);
+                              }
+                            } finally {
+                              setCurrentStage(nextStage);
+                              setTargetProd(nextTarget);
+                              setIsGeneratingNextClue(false);
+                              if (isTargetBought) {
+                                setOrderToast(`🎉 Secret Hunt Item Found! Coupon Unlocked + Clue #${nextStage} Unlocked!`);
+                              } else {
+                                setOrderToast(`🛒 Order Placed for ${boughtName}! Clue #${nextStage} Unlocked!`);
+                              }
+                              triggerConfetti();
+                            }
+                          } else {
+                            if (isTargetBought) {
+                              setOrderToast(`🏆 All 3 Hunt Challenges Completed! Grand Winner!`);
+                            } else {
+                              setOrderToast(`✅ Order Placed for ${boughtName}!`);
+                            }
+                            triggerConfetti();
+                          }
+                        }}
+                      >
                         PROCEED TO PAY ⚡
                       </button>
                     </div>
@@ -682,7 +779,7 @@ RAW_HTML_TEMPLATE = """
                                 <div className="step-icon-wrap step-icon-2">🧩</div>
                                 <div>
                                   <div style={{ fontSize: '0.72rem', fontWeight: 800 }}>2. AI Riddle Clues</div>
-                                  <div style={{ fontSize: '0.62rem', color: '#64748b' }}>Groq LLM generates dynamic riddle clues tailored to your history!</div>
+                                  <div style={{ fontSize: '0.62rem', color: '#64748b' }}>AI generates dynamic riddle clues tailored to your history!</div>
                                 </div>
                               </div>
                               <div className="step-card">
@@ -703,13 +800,12 @@ RAW_HTML_TEMPLATE = """
                                 <div className={`clue-badge ${currentStage === 3 ? 'current' : ''}`}>3</div>
                               </div>
                               <div style={{ fontSize: '0.58rem', fontWeight: 900, color: '#16a34a', textAlign: 'center', marginBottom: '2px' }}>
-                                GROQ LLM CLUE #{currentStage}: {liveClue.clue_title || 'MYSTERY RIDDLE'}
+                                CLUE #{currentStage}: {liveClue.clue_title || 'MYSTERY RIDDLE'}
                               </div>
                               <div style={{ fontSize: '0.82rem', fontWeight: 900, textAlign: 'center', marginBottom: '10px' }}>Active Challenge</div>
 
                               <div className="clue-box">
                                 <p className="clue-riddle">"{liveClue.riddle}"</p>
-                                <div className="hint-pill-btn" style={{ display: 'inline-block' }}>{liveClue.hint}</div>
                               </div>
                             </div>
                           )}
@@ -742,10 +838,9 @@ RAW_HTML_TEMPLATE = """
                             <div style={{ fontSize: '0.62rem', fontWeight: 900, color: '#16a34a', textAlign: 'center', marginBottom: '6px' }}>AI CLUE PROGRESSION</div>
 
                             <div className="clue-box" style={{ margin: '4px 0 0 0', padding: '8px 10px' }}>
-                              <div style={{ fontSize: '0.58rem', fontWeight: 900, color: '#c2410c', marginBottom: '2px' }}>🎯 CLUE #{currentStage} ACTIVE (Groq Llama-3.3)</div>
+                              <div style={{ fontSize: '0.58rem', fontWeight: 900, color: '#c2410c', marginBottom: '2px' }}>🎯 CLUE #{currentStage}</div>
                               <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#16a34a', marginBottom: '2px' }}>{liveClue.clue_title}</div>
                               <p className="clue-riddle" style={{ fontSize: '0.68rem', margin: '3px 0' }}>"{liveClue.riddle}"</p>
-                              <div className="hint-pill-btn" style={{ display: 'inline-block', fontSize: '0.58rem', padding: '2px 8px' }}>{liveClue.hint}</div>
                             </div>
                           </div>
                         </div>
@@ -819,10 +914,23 @@ RAW_HTML_TEMPLATE = """
                     </div>
                   </React.Fragment>
                 )}
+
+                {isGeneratingNextClue && (
+                  <div className="modal-overlay" style={{ background: 'rgba(15, 23, 42, 0.88)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div style={{ background: 'white', borderRadius: '20px', padding: '24px 18px', textAlign: 'center', width: '260px', boxShadow: '0 20px 40px rgba(0,0,0,0.5)' }}>
+                      <div style={{ fontSize: '2.2rem', marginBottom: '8px' }}>⚡</div>
+                      <div style={{ fontSize: '0.92rem', fontWeight: 900, color: '#0c831f', marginBottom: '4px' }}>
+                        Groq AI Generating Clue #{currentStage + 1}...
+                      </div>
+                      <div style={{ fontSize: '0.66rem', color: '#475569', lineHeight: 1.4, margin: '6px 0' }}>
+                        Analyzing updated purchase history and crafting personalized riddle for {session.persona.name}...
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
-        );
+          );
       }
 
       ReactDOM.createRoot(document.getElementById('root')).render(<App />);

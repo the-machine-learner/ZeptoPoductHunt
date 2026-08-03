@@ -14,10 +14,12 @@ def get_groq_api_key():
         return st.secrets["GROQ_API_KEY"]
     return os.getenv("GROQ_API_KEY", "")
 
+@st.cache_data(show_spinner=False, ttl=600)
 def generate_ai_clue(persona, target_prod, clue_stage, current_history):
     """
-    Generate a dynamic riddle clue using Groq LLM (llama-3.3-70b-versatile).
+    Generate a dynamic riddle clue using Groq LLM (llama-3.1-8b-instant).
     Enforces Progressive Simplification rules based on clue_stage (1, 2, or 3).
+    Cached for 10 minutes to prevent Groq API rate limiting.
     """
     start_t = time.time()
     api_key = get_groq_api_key()
@@ -39,7 +41,7 @@ USER PROFILE:
 - Demographics: {persona['demographics']}
 - Tone Preference: {persona['tone']}
 - Current Purchase History: {', '.join(current_history)}
-- Remaining Unexplored Categories: {', '.join(persona['unexplored_categories'])}
+- Suggested Adjacent Categories: {', '.join(persona.get('suggested_categories', []))}
 
 TARGET PRODUCT FOR THIS HUNT STAGE:
 - Name: {target_prod['name']}
@@ -66,7 +68,7 @@ STRICT JSON OUTPUT FORMAT (Return ONLY valid JSON):
                 "Content-Type": "application/json"
             },
             json={
-                "model": "llama-3.3-70b-versatile",
+                "model": "llama-3.1-8b-instant",
                 "messages": [{"role": "user", "content": prompt}],
                 "temperature": 0.7,
                 "response_format": {"type": "json_object"}
@@ -79,7 +81,7 @@ STRICT JSON OUTPUT FORMAT (Return ONLY valid JSON):
             content = res_data["choices"][0]["message"]["content"]
             parsed = json.loads(content)
             parsed["latency_ms"] = latency
-            parsed["model"] = "llama-3.3-70b-versatile"
+            parsed["model"] = "llama-3.1-8b-instant"
             parsed["prompt_used"] = prompt
             return parsed
         else:

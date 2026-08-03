@@ -1,21 +1,9 @@
 """
 User Profiles & Customer Personas Store for Zepto Product Hunt.
+Each persona has ONE fixed Secret Hunt Product for all 3 progressive clues.
 """
 
 PERSONAS = {
-    'arjun': {
-        'id': 'arjun',
-        'name': 'Arjun Patel',
-        'title': 'Gaming & Tech Enthusiast',
-        'demographics': '24, Techie / Bachelor in Cyber City',
-        'avatar': '🎮',
-        'tone': 'Playful, Gen-Z, witty, sarcastic tech humor (safe language)',
-        'purchase_history': ['Sony WH-1000XM5 ANC Headphones', 'Doritos Nacho Cheese Chips (150g)'],
-        'explored_categories': ['Gaming Audio', 'Snacks'],
-        'unexplored_categories': ['Gaming Controllers', 'Fresh Produce', 'Personal Care'],
-        'target_sequence': ['gamepad', 'apples', 'serum'],
-        'catalog_ids': ['gamepad', 'headphones', 'mouse', 'doritos', 'apples', 'serum']
-    },
     'ananya': {
         'id': 'ananya',
         'name': 'Ananya Sharma',
@@ -25,9 +13,22 @@ PERSONAS = {
         'tone': 'Playful, aesthetic, glowing skin jokes, witty relatable (safe language)',
         'purchase_history': ['CeraVe Hydrating Cleanser (236ml)', 'Organic Shimla Apples (4 pcs)'],
         'explored_categories': ['Skincare Cleansers', 'Fresh Produce'],
-        'unexplored_categories': ['Serums & Treatments', 'Gourmet Produce', 'Gaming Audio'],
-        'target_sequence': ['serum', 'avocado', 'headphones'],
-        'catalog_ids': ['serum', 'cerave', 'avocado', 'apples', 'headphones', 'doritos']
+        'suggested_categories': ['fitness', 'wellness', 'aromatherapy'],
+        'target_product_id': 'yogamat',
+        'catalog_ids': ['yogamat', 'matcha', 'candle', 'cerave', 'apples', 'avocado']
+    },
+    'arjun': {
+        'id': 'arjun',
+        'name': 'Arjun Patel',
+        'title': 'Gaming & Tech Enthusiast',
+        'demographics': '24, Techie / Bachelor in Cyber City',
+        'avatar': '🎮',
+        'tone': 'Playful, Gen-Z, witty, sarcastic tech humor (safe language)',
+        'purchase_history': ['Sony WH-1000XM5 ANC Headphones', 'Doritos Nacho Cheese Chips (150g)'],
+        'explored_categories': ['Gaming Audio', 'Snacks'],
+        'suggested_categories': ['fitness', 'protein drinks', 'men\'s grooming'],
+        'target_product_id': 'fitband',
+        'catalog_ids': ['fitband', 'proteinshake', 'facewash', 'headphones', 'mouse', 'doritos']
     },
     'rohan': {
         'id': 'rohan',
@@ -38,9 +39,9 @@ PERSONAS = {
         'tone': 'Playful, Gen-Z meme energy, late-night craving jokes (safe language)',
         'purchase_history': ['Doritos Nacho Cheese Chips (150g)', 'Logitech G305 Wireless Mouse'],
         'explored_categories': ['Snacks', 'Gaming Accessories'],
-        'unexplored_categories': ['Pet Store', 'Personal Care', 'Gaming Controllers'],
-        'target_sequence': ['pedigree', 'serum', 'gamepad'],
-        'catalog_ids': ['pedigree', 'doritos', 'mouse', 'gamepad', 'serum', 'apples']
+        'suggested_categories': ['quick meals', 'pet store', 'personal care'],
+        'target_product_id': 'ramen',
+        'catalog_ids': ['ramen', 'pedigree', 'serum', 'doritos', 'mouse', 'apples']
     },
     'priya': {
         'id': 'priya',
@@ -51,8 +52,8 @@ PERSONAS = {
         'tone': 'Warm, practical, clever family home humor (safe language)',
         'purchase_history': ['Organic Shimla Apples (4 pcs)', 'Pedigree Adult Dog Food (3kg)'],
         'explored_categories': ['Fresh Produce', 'Pet Care'],
-        'unexplored_categories': ['Gourmet Fresh', 'Personal Care', 'Gaming Audio'],
-        'target_sequence': ['avocado', 'cerave', 'headphones'],
-        'catalog_ids': ['avocado', 'apples', 'pedigree', 'cerave', 'headphones', 'mouse']
+        'suggested_categories': ['gourmet pantry', 'personal care', 'home tech'],
+        'target_product_id': 'oliveoil',
+        'catalog_ids': ['oliveoil', 'cerave', 'headphones', 'apples', 'pedigree', 'avocado']
     }
 }
