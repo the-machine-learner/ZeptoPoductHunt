@@ -1,14 +1,18 @@
 import streamlit as st
 import streamlit.components.v1 as components
+import requests
+import json
+import time
+import os
 
 st.set_page_config(
-    page_title="Zepto Product Hunt - Gamified Discovery MVP",
+    page_title="Zepto Product Hunt - AI-Enabled MVP",
     page_icon="🎯",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Custom Styling for Streamlit Shell to remove top padding, header, & eliminate scrollbars
+# Custom Styling for Streamlit Shell
 st.markdown("""
 <style>
     header[data-testid="stHeader"] {
@@ -35,38 +39,407 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Manage Demo State in Streamlit Session State
+# ---------------------------------------------------------
+# GROQ API & SECRETS CONFIGURATION
+# ---------------------------------------------------------
+def get_groq_api_key():
+    if "GROQ_API_KEY" in st.secrets:
+        return st.secrets["GROQ_API_KEY"]
+    return os.getenv("GROQ_API_KEY", "")
+
+# ---------------------------------------------------------
+# PERSONAS & MASTER CATALOGUE
+# ---------------------------------------------------------
+PRODUCTS_MASTER = {
+    'gamepad': {
+        'id': 'gamepad',
+        'name': 'Zebronics MAX FURY RGB Gamepad',
+        'category': 'Gaming',
+        'price': 1999,
+        'rating': '4.8 ★ (1.2k)',
+        'isHuntItem': True,
+        'image': 'https://images.unsplash.com/photo-1600080972464-8e5f35f63d08?w=400&auto=format&fit=crop',
+        'desc': 'Transparent RGB LED Wired Gamepad | Dual Motor Force Feedback | Ultra-low Latency 1.8m Cable'
+    },
+    'headphones': {
+        'id': 'headphones',
+        'name': 'Sony WH-1000XM5 ANC Headphones',
+        'category': 'Gaming',
+        'price': 29990,
+        'rating': '4.9 ★ (3.1k)',
+        'isHuntItem': False,
+        'image': 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&auto=format&fit=crop',
+        'desc': 'Industry Leading Noise Cancellation | 30hr Battery Life | Crystal Clear Hands-free Calls'
+    },
+    'mouse': {
+        'id': 'mouse',
+        'name': 'Logitech G305 Wireless Mouse',
+        'category': 'Gaming',
+        'price': 4295,
+        'rating': '4.7 ★ (890)',
+        'isHuntItem': False,
+        'image': 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=400&auto=format&fit=crop',
+        'desc': 'LIGHTSPEED Wireless Technology | HERO Sensor 12,000 DPI | 250 Hours Battery Life'
+    },
+    'apples': {
+        'id': 'apples',
+        'name': 'Organic Shimla Apples (4 pcs)',
+        'category': 'Fresh',
+        'price': 189,
+        'rating': '4.7 ★ (4.1k)',
+        'isHuntItem': False,
+        'image': 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400&auto=format&fit=crop',
+        'desc': 'Crisp, Juicy, Farm-Fresh High Mountain Shimla Apples (~500g)'
+    },
+    'avocado': {
+        'id': 'avocado',
+        'name': 'Fresh Imported Hass Avocado (2 pcs)',
+        'category': 'Fresh',
+        'price': 260,
+        'rating': '4.5 ★ (920)',
+        'isHuntItem': False,
+        'image': 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=400&auto=format&fit=crop',
+        'desc': 'Nutrient Rich Ready-to-Eat Premium Imported Hass Avocados'
+    },
+    'cerave': {
+        'id': 'cerave',
+        'name': 'CeraVe Hydrating Cleanser (236ml)',
+        'category': 'Personal',
+        'price': 550,
+        'rating': '4.8 ★ (2.8k)',
+        'isHuntItem': False,
+        'image': 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&auto=format&fit=crop',
+        'desc': 'Non-Foaming Face Wash with Essential Ceramides & Hyaluronic Acid'
+    },
+    'serum': {
+        'id': 'serum',
+        'name': 'Minimalist 10% Vitamin C Serum',
+        'category': 'Personal',
+        'price': 699,
+        'rating': '4.7 ★ (1.5k)',
+        'isHuntItem': False,
+        'image': 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=400&auto=format&fit=crop',
+        'desc': 'Glow Boosting Formula with Centella Water & Acetyl Glucosamine (30ml)'
+    },
+    'pedigree': {
+        'id': 'pedigree',
+        'name': 'Pedigree Adult Dog Food (3kg)',
+        'category': 'Pet Store',
+        'price': 920,
+        'rating': '4.8 ★ (1.1k)',
+        'isHuntItem': False,
+        'image': 'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=400&auto=format&fit=crop',
+        'desc': '100% Complete Nutrition for Adult Dogs | Healthy Coat & Digestion'
+    },
+    'doritos': {
+        'id': 'doritos',
+        'name': 'Doritos Nacho Cheese Chips (150g)',
+        'category': 'Snacks',
+        'price': 90,
+        'rating': '4.9 ★ (8.9k)',
+        'isHuntItem': False,
+        'image': 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=400&auto=format&fit=crop',
+        'desc': 'Crunchy Tortilla Chips with Bold & Cheesy Nacho Flavor'
+    }
+}
+
+PERSONAS = {
+    'arjun': {
+        'id': 'arjun',
+        'name': 'Arjun Patel',
+        'title': 'Gaming & Tech Enthusiast',
+        'demographics': '24, Techie / Bachelor in Cyber City',
+        'avatar': '🎮',
+        'tone': 'Playful, Gen-Z, witty, sarcastic tech humor (safe language)',
+        'purchase_history': ['Sony WH-1000XM5 ANC Headphones', 'Doritos Nacho Cheese Chips (150g)'],
+        'explored_categories': ['Gaming Audio', 'Snacks'],
+        'unexplored_categories': ['Gaming Controllers', 'Fresh Produce', 'Personal Care'],
+        'target_sequence': ['gamepad', 'apples', 'serum'],
+        'catalog_ids': ['gamepad', 'headphones', 'mouse', 'doritos', 'apples', 'serum']
+    },
+    'ananya': {
+        'id': 'ananya',
+        'name': 'Ananya Sharma',
+        'title': 'Beauty & Skincare Lover',
+        'demographics': '26, Skincare & Wellness Aficionado',
+        'avatar': '💄',
+        'tone': 'Playful, aesthetic, glowing skin jokes, witty relatable (safe language)',
+        'purchase_history': ['CeraVe Hydrating Cleanser (236ml)', 'Organic Shimla Apples (4 pcs)'],
+        'explored_categories': ['Skincare Cleansers', 'Fresh Produce'],
+        'unexplored_categories': ['Serums & Treatments', 'Gourmet Produce', 'Gaming Audio'],
+        'target_sequence': ['serum', 'avocado', 'headphones'],
+        'catalog_ids': ['serum', 'cerave', 'avocado', 'apples', 'headphones', 'doritos']
+    },
+    'rohan': {
+        'id': 'rohan',
+        'name': 'Rohan Verma',
+        'title': 'Late-Night Munchie Monster',
+        'demographics': '22, Student / Night Owl',
+        'avatar': '🍕',
+        'tone': 'Playful, Gen-Z meme energy, late-night craving jokes (safe language)',
+        'purchase_history': ['Doritos Nacho Cheese Chips (150g)', 'Logitech G305 Wireless Mouse'],
+        'explored_categories': ['Snacks', 'Gaming Accessories'],
+        'unexplored_categories': ['Pet Store', 'Personal Care', 'Gaming Controllers'],
+        'target_sequence': ['pedigree', 'serum', 'gamepad'],
+        'catalog_ids': ['pedigree', 'doritos', 'mouse', 'gamepad', 'serum', 'apples']
+    },
+    'priya': {
+        'id': 'priya',
+        'name': 'Priya & Vikram',
+        'title': 'Household & Family Replenishers',
+        'demographics': '34, Working Parents in Sector 24',
+        'avatar': '🧺',
+        'tone': 'Warm, practical, clever family home humor (safe language)',
+        'purchase_history': ['Organic Shimla Apples (4 pcs)', 'Pedigree Adult Dog Food (3kg)'],
+        'explored_categories': ['Fresh Produce', 'Pet Care'],
+        'unexplored_categories': ['Gourmet Fresh', 'Personal Care', 'Gaming Audio'],
+        'target_sequence': ['avocado', 'cerave', 'headphones'],
+        'catalog_ids': ['avocado', 'apples', 'pedigree', 'cerave', 'headphones', 'mouse']
+    }
+}
+
+# ---------------------------------------------------------
+# BACKEND AI CLUE GENERATION PIPELINE (GROQ LLM)
+# ---------------------------------------------------------
+def generate_ai_clue(persona, target_prod, clue_stage, current_history):
+    start_t = time.time()
+    api_key = get_groq_api_key()
+    
+    # Progressive difficulty rules:
+    if clue_stage == 1:
+        diff_rule = "Clue 1 (Clever Riddle): Write a clever, witty, non-obvious riddle. Do NOT explicitly name the product title or brand. Make the user think!"
+    elif clue_stage == 2:
+        diff_rule = "Clue 2 (Simpler Hint): Make this clue SIMPLER and MORE HELPFUL. Give a clear hint about its product category, shape, or daily usage benefit."
+    else:
+        diff_rule = "Clue 3 (Direct Actionable Clue): Make this clue VERY DIRECT and EASY TO SOLVE. Explicitly point the user to the exact aisle/category and how it helps them finish the hunt!"
+
+    prompt = f"""
+You are the AI Game Engine for Zepto Product Hunt Week.
+Generate a personalized, witty riddle clue for the customer.
+
+USER PROFILE:
+- Name: {persona['name']} ({persona['title']})
+- Demographics: {persona['demographics']}
+- Tone Preference: {persona['tone']}
+- Current Purchase History: {', '.join(current_history)}
+- Remaining Unexplored Categories: {', '.join(persona['unexplored_categories'])}
+
+TARGET PRODUCT FOR THIS HUNT STAGE:
+- Name: {target_prod['name']}
+- Category: {target_prod['category']}
+- Description: {target_prod['desc']}
+
+CLUE PROGRESSION STAGE:
+- Clue Number: {clue_stage} of 3
+- Rule: {diff_rule}
+
+STRICT JSON OUTPUT FORMAT (Return ONLY valid JSON):
+{{
+  "clue_title": "Short 3-5 word catchphrase in ALL CAPS (e.g. THE GHOST IN THE LIVING ROOM)",
+  "riddle": "1-2 sentence witty riddle matching the user tone",
+  "hint": "Short 2-4 word category hint (e.g. Hint: Check Gaming)"
+}}
+"""
+
+    try:
+        response = requests.post(
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            },
+            json={
+                "model": "llama-3.3-70b-versatile",
+                "messages": [{"role": "user", "content": prompt}],
+                "temperature": 0.7,
+                "response_format": {"type": "json_object"}
+            },
+            timeout=8
+        )
+        latency = round((time.time() - start_t) * 1000, 1)
+        if response.status_code == 200:
+            res_data = response.json()
+            content = res_data["choices"][0]["message"]["content"]
+            parsed = json.loads(content)
+            parsed["latency_ms"] = latency
+            parsed["model"] = "llama-3.3-70b-versatile"
+            parsed["prompt_used"] = prompt
+            return parsed
+        else:
+            raise Exception(f"Groq API Error {response.status_code}: {response.text}")
+    except Exception as e:
+        # Graceful fallback
+        return {
+            "clue_title": f"CLUE {clue_stage}: MYSTERY CHALLENGE",
+            "riddle": f"Looking for an upgrade in {target_prod['category']}? Discover {target_prod['name']} in your catalog!",
+            "hint": f"Hint: Check {target_prod['category']}",
+            "latency_ms": 0,
+            "model": "fallback",
+            "error": str(e)
+        }
+
+def init_backend_session(persona_key, flow_name="flow2_profile"):
+    persona = PERSONAS[persona_key]
+    target_id = persona['target_sequence'][0]
+    target_prod = PRODUCTS_MASTER[target_id]
+    
+    # Generate Clue 1 via Groq
+    clue_1 = generate_ai_clue(persona, target_prod, 1, persona['purchase_history'])
+    
+    session_data = {
+        'persona_key': persona_key,
+        'persona': persona,
+        'entry_flow': flow_name,
+        'hunt_stage': 1,
+        'purchase_history': list(persona['purchase_history']),
+        'target_id': target_id,
+        'target_prod': target_prod,
+        'clues': {1: clue_1},
+        'completed': False
+    }
+    return session_data
+
+# ---------------------------------------------------------
+# STREAMLIT SESSION STATE INITIALIZATION
+# ---------------------------------------------------------
+if "session_data" not in st.session_state:
+    st.session_state.session_data = init_backend_session('arjun', 'flow1_tutorial')
 if "demo_mode" not in st.session_state:
-    st.session_state.demo_mode = "normal"
+    st.session_state.demo_mode = "tour"
 if "demo_key" not in st.session_state:
     st.session_state.demo_key = 0
 
-# Sidebar Setup with Controls Shifted to Top
+# ---------------------------------------------------------
+# SIDEBAR CONTROLS & PERSONA SELECTOR
+# ---------------------------------------------------------
 st.sidebar.title("🎯 Zepto Product Hunt")
-st.sidebar.markdown("**Gamified Category Discovery Engine MVP**")
-
-st.sidebar.markdown("### 🎮 Demo Controls")
-col1, col2 = st.sidebar.columns(2)
-if col1.button("🔄 Reset Demo", use_container_width=True):
-    st.session_state.demo_mode = "normal"
-    st.session_state.demo_key += 1
-if col2.button("▶ Start Tour", use_container_width=True):
-    st.session_state.demo_mode = "tour"
-    st.session_state.demo_key += 1
+st.sidebar.markdown("**AI-Enabled Category Discovery MVP**")
 
 st.sidebar.markdown("---")
-st.sidebar.info("""
-**Interactive Flow Steps:**
-1. **Screen 1 (Home)**: Tap **🔥 Hunt** at bottom right or browse categories.
-2. **Screen 2 (Walkthrough)**: View 4-step game rules.
-3. **Screen 3 (Clue Challenge)**: Read Clue 3 riddle (*"I test friendships, press your buttons..."*).
-4. **Screen 4 (Rewards)**: Check Prize ₹50 OFF.
-5. **Screen 5 (Category)**: Browse real products with stock photos.
-6. **Screen 6 (PDP)**: Open Zebronics MAX FURY RGB Gamepad & tap **Add to Cart**.
-7. **Screen 7 (Cart)**: View unlocked Coupon Code `ACCZ50OFF` + Celebration Banner!
-""")
+st.sidebar.markdown("### 🚪 Select Entry Flow")
 
-st.sidebar.caption("Built for Product Management Showcase • Gen Z Discovery Engine")
+flow_choice = st.sidebar.radio(
+    "Choose Flow:",
+    ["Flow 1: Guided Tutorial (Demo Profile)", "Flow 2: Persona Explorer"],
+    index=0 if st.session_state.session_data['entry_flow'] == 'flow1_tutorial' else 1
+)
+
+if flow_choice.startswith("Flow 1"):
+    st.sidebar.info("🎓 **Flow 1: Guided Tutorial** uses default persona **Arjun Patel** to provide a consistent 11-step walkthrough for judges.")
+    if st.sidebar.button("▶ Start Guided Tutorial", use_container_width=True, type="primary"):
+        with st.spinner("⚡ AI Initializing Product Hunt Session for Arjun..."):
+            st.session_state.session_data = init_backend_session('arjun', 'flow1_tutorial')
+            st.session_state.demo_mode = "tour"
+            st.session_state.demo_key += 1
+            st.rerun()
+
+else:
+    st.sidebar.markdown("### 👤 Flow 2: Profile Selection")
+    persona_options = {
+        'arjun': "🎮 Arjun Patel (Gaming & Tech)",
+        'ananya': "💄 Ananya Sharma (Beauty & Skincare)",
+        'rohan': "🍕 Rohan Verma (Late-Night Munchies)",
+        'priya': "🧺 Priya & Vikram (Household & Family)"
+    }
+    
+    selected_p_key = st.sidebar.selectbox(
+        "Select Persona Profile:",
+        options=list(persona_options.keys()),
+        format_func=lambda x: persona_options[x],
+        index=list(persona_options.keys()).index(st.session_state.session_data['persona_key'])
+    )
+    
+    p_info = PERSONAS[selected_p_key]
+    st.sidebar.caption(f"**Bio**: {p_info['demographics']}")
+    st.sidebar.caption(f"**Past Buys**: {', '.join(p_info['purchase_history'])}")
+    st.sidebar.caption(f"**AI Tone**: {p_info['tone']}")
+
+    if st.sidebar.button("🚀 Launch Profile Hunt (AI)", use_container_width=True, type="primary"):
+        with st.spinner(f"⚡ AI Crafting personalized clue for {p_info['name']}..."):
+            st.session_state.session_data = init_backend_session(selected_p_key, 'flow2_profile')
+            st.session_state.demo_mode = "normal"
+            st.session_state.demo_key += 1
+            st.rerun()
+
+st.sidebar.markdown("---")
+st.sidebar.markdown("### 🔄 Continuous AI Gameplay Loop")
+st.sidebar.caption("Simulate purchases to trigger progressive AI clue generation:")
+
+curr_stage = st.session_state.session_data['hunt_stage']
+curr_persona = st.session_state.session_data['persona']
+
+if curr_stage == 1:
+    if st.sidebar.button("🛒 Complete Purchase #1 (Unlock Clue 2)", use_container_width=True):
+        with st.spinner("⚡ AI Generating Clue 2 (Simpler Hint)..."):
+            # Update history
+            target_1_prod = st.session_state.session_data['target_prod']
+            st.session_state.session_data['purchase_history'].append(target_1_prod['name'])
+            # Next target
+            next_target_id = curr_persona['target_sequence'][1]
+            next_target_prod = PRODUCTS_MASTER[next_target_id]
+            st.session_state.session_data['target_id'] = next_target_id
+            st.session_state.session_data['target_prod'] = next_target_prod
+            st.session_state.session_data['hunt_stage'] = 2
+            # Generate Clue 2
+            clue_2 = generate_ai_clue(curr_persona, next_target_prod, 2, st.session_state.session_data['purchase_history'])
+            st.session_state.session_data['clues'][2] = clue_2
+            st.session_state.demo_key += 1
+            st.rerun()
+
+elif curr_stage == 2:
+    if st.sidebar.button("🛒 Complete Purchase #2 (Unlock Clue 3)", use_container_width=True):
+        with st.spinner("⚡ AI Generating Clue 3 (Direct Actionable Clue)..."):
+            # Update history
+            target_2_prod = st.session_state.session_data['target_prod']
+            st.session_state.session_data['purchase_history'].append(target_2_prod['name'])
+            # Next target
+            next_target_id = curr_persona['target_sequence'][2]
+            next_target_prod = PRODUCTS_MASTER[next_target_id]
+            st.session_state.session_data['target_id'] = next_target_id
+            st.session_state.session_data['target_prod'] = next_target_prod
+            st.session_state.session_data['hunt_stage'] = 3
+            # Generate Clue 3
+            clue_3 = generate_ai_clue(curr_persona, next_target_prod, 3, st.session_state.session_data['purchase_history'])
+            st.session_state.session_data['clues'][3] = clue_3
+            st.session_state.demo_key += 1
+            st.rerun()
+
+else:
+    st.sidebar.success("🎉 All 3 Hunt Stages Completed!")
+    if st.sidebar.button("🔄 Reset Hunt Session", use_container_width=True):
+        st.session_state.session_data = init_backend_session(st.session_state.session_data['persona_key'], st.session_state.session_data['entry_flow'])
+        st.session_state.demo_key += 1
+        st.rerun()
+
+# ---------------------------------------------------------
+# AI INSPECTOR & METADATA PANEL
+# ---------------------------------------------------------
+st.sidebar.markdown("---")
+with st.sidebar.expander("⚡ Groq AI Live Inspector", expanded=False):
+    latest_clue = st.session_state.session_data['clues'].get(curr_stage, {})
+    st.markdown(f"**Model**: `{latest_clue.get('model', 'llama-3.3-70b-versatile')}`")
+    st.markdown(f"**Latency**: `{latest_clue.get('latency_ms', 0)} ms`")
+    st.markdown(f"**Active Stage**: Clue #{curr_stage} of 3")
+    st.markdown(f"**Target Item**: `{st.session_state.session_data['target_prod']['name']}`")
+    st.json(latest_clue)
+
+# Prepare Payload for React App
+s_data = st.session_state.session_data
+curr_clue = s_data['clues'].get(s_data['hunt_stage'], {})
+
+# Catalogue for persona
+catalog_prods = [PRODUCTS_MASTER[pid] for pid in s_data['persona']['catalog_ids']]
+
+react_session_payload = {
+    'persona': s_data['persona'],
+    'entry_flow': s_data['entry_flow'],
+    'hunt_stage': s_data['hunt_stage'],
+    'purchase_history': s_data['purchase_history'],
+    'target_prod': s_data['target_prod'],
+    'clue': curr_clue,
+    'clues_history': s_data['clues'],
+    'products': catalog_prods
+}
 
 raw_html_template = """
 <!DOCTYPE html>
@@ -203,6 +576,17 @@ raw_html_template = """
       }
       .location-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
       .eta-pill { background: rgba(255, 255, 255, 0.25); padding: 3px 6px; border-radius: 14px; font-size: 0.7rem; font-weight: 800; }
+      
+      .persona-header-banner {
+        background: rgba(255, 255, 255, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+        padding: 6px 10px;
+        margin-bottom: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
       .search-box-wrap { position: relative; margin-bottom: 8px; }
       .search-input {
         width: 100%;
@@ -282,12 +666,6 @@ raw_html_template = """
         font-weight: 900;
         color: #0f172a;
       }
-      .product-mrp {
-        font-size: 0.62rem;
-        text-decoration: line-through;
-        color: #94a3b8;
-        margin-left: 4px;
-      }
 
       /* Modal Centered Card Overlay */
       .modal-overlay {
@@ -365,103 +743,13 @@ raw_html_template = """
     <script type="text/babel">
       const { useState, useEffect } = React;
 
-      const PRODUCTS = [
-        {
-          id: 'gamepad',
-          name: 'Zebronics MAX FURY RGB Gamepad',
-          category: 'Gaming',
-          price: 1999,
-          rating: '4.8 ★ (1.2k)',
-          isHuntItem: true,
-          image: 'https://images.unsplash.com/photo-1600080972464-8e5f35f63d08?w=400&auto=format&fit=crop',
-          desc: 'Transparent RGB LED Wired Gamepad | Dual Motor Force Feedback | Ultra-low Latency 1.8m Cable'
-        },
-        {
-          id: 'headphones',
-          name: 'Sony WH-1000XM5 ANC Headphones',
-          category: 'Gaming',
-          price: 29990,
-          rating: '4.9 ★ (3.1k)',
-          isHuntItem: false,
-          image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400&auto=format&fit=crop',
-          desc: 'Industry Leading Noise Cancellation | 30hr Battery Life | Crystal Clear Hands-free Calls'
-        },
-        {
-          id: 'mouse',
-          name: 'Logitech G305 Wireless Mouse',
-          category: 'Gaming',
-          price: 4295,
-          rating: '4.7 ★ (890)',
-          isHuntItem: false,
-          image: 'https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=400&auto=format&fit=crop',
-          desc: 'LIGHTSPEED Wireless Technology | HERO Sensor 12,000 DPI | 250 Hours Battery Life'
-        },
-        {
-          id: 'apples',
-          name: 'Organic Shimla Apples (4 pcs)',
-          category: 'Fresh',
-          price: 189,
-          rating: '4.7 ★ (4.1k)',
-          isHuntItem: false,
-          image: 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?w=400&auto=format&fit=crop',
-          desc: 'Crisp, Juicy, Farm-Fresh High Mountain Shimla Apples (~500g)'
-        },
-        {
-          id: 'avocado',
-          name: 'Fresh Imported Hass Avocado (2 pcs)',
-          category: 'Fresh',
-          price: 260,
-          rating: '4.5 ★ (920)',
-          isHuntItem: false,
-          image: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=400&auto=format&fit=crop',
-          desc: 'Nutrient Rich Ready-to-Eat Premium Imported Hass Avocados'
-        },
-        {
-          id: 'cerave',
-          name: 'CeraVe Hydrating Cleanser (236ml)',
-          category: 'Personal',
-          price: 550,
-          rating: '4.8 ★ (2.8k)',
-          isHuntItem: false,
-          image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400&auto=format&fit=crop',
-          desc: 'Non-Foaming Face Wash with Essential Ceramides & Hyaluronic Acid'
-        },
-        {
-          id: 'serum',
-          name: 'Minimalist 10% Vitamin C Serum',
-          category: 'Personal',
-          price: 699,
-          rating: '4.7 ★ (1.5k)',
-          isHuntItem: false,
-          image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=400&auto=format&fit=crop',
-          desc: 'Glow Boosting Formula with Centella Water & Acetyl Glucosamine (30ml)'
-        },
-        {
-          id: 'pedigree',
-          name: 'Pedigree Adult Dog Food (3kg)',
-          category: 'Pet Store',
-          price: 920,
-          rating: '4.8 ★ (1.1k)',
-          isHuntItem: false,
-          image: 'https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=400&auto=format&fit=crop',
-          desc: '100% Complete Nutrition for Adult Dogs | Healthy Coat & Digestion'
-        },
-        {
-          id: 'doritos',
-          name: 'Doritos Nacho Cheese Chips (150g)',
-          category: 'Snacks',
-          price: 90,
-          rating: '4.9 ★ (8.9k)',
-          isHuntItem: false,
-          image: 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=400&auto=format&fit=crop',
-          desc: 'Crunchy Tortilla Chips with Bold & Cheesy Nacho Flavor'
-        }
-      ];
+      const INITIAL_PAYLOAD = __SESSION_PAYLOAD__;
 
       function App() {
+        const [session, setSession] = useState(INITIAL_PAYLOAD);
         const [screen, setScreen] = useState('home');
         const [selectedCategory, setSelectedCategory] = useState('All');
-        const [selectedProduct, setSelectedProduct] = useState(PRODUCTS[0]);
+        const [selectedProduct, setSelectedProduct] = useState(session.products[0]);
         const [searchQuery, setSearchQuery] = useState('');
         const [showModal, setShowModal] = useState(false);
         const [modalTab, setModalTab] = useState('walkthrough');
@@ -470,6 +758,10 @@ raw_html_template = """
         const [huntUnlocked, setHuntUnlocked] = useState(false);
         const [tutorialStep, setTutorialStep] = useState('__DEMO_MODE__' === 'tour' ? 1 : 0);
         const [targetRect, setTargetRect] = useState(null);
+
+        const currentTargetId = session.target_prod.id;
+        const liveClue = session.clue;
+        const currentStage = session.hunt_stage;
 
         useEffect(() => {
           if (tutorialStep <= 0) { setTargetRect(null); return; }
@@ -503,24 +795,24 @@ raw_html_template = """
 
         const getTutorialStepData = () => {
           switch (tutorialStep) {
-            case 1: return { title: "Step 1: Open Product Hunt", description: "Tap the highlighted 'Hunt' icon at the bottom right to enter Product Hunt Week!", buttonText: "Open Hunt →", tooltipBottom: 65, onAction: () => { setShowModal(true); setModalTab('walkthrough'); setTutorialStep(2); } };
+            case 1: return { title: "Step 1: Open Product Hunt", description: `Welcome ${session.persona.name}! Tap 'Hunt' to view your AI-generated riddle clue.`, buttonText: "Open Hunt →", tooltipBottom: 65, onAction: () => { setShowModal(true); setModalTab('walkthrough'); setTutorialStep(2); } };
             case 2: return { title: "Step 2: Walkthrough (How It Works)", description: "Review 4-step game rules: Buy Products → Unlock Clues → Find Item → Get Discount!", buttonText: "View Clue →", tooltipBottom: 130, onAction: () => { setModalTab('clues'); setTutorialStep(3); } };
-            case 3: return { title: "Step 3: Read Spicy AI Clue", description: "Clue 3 Challenge: 'I test friendships, press your buttons... next to your TV.' Hint: Gaming!", buttonText: "Check Rewards →", tooltipBottom: 130, onAction: () => { setModalTab('rewards'); setTutorialStep(4); } };
+            case 3: return { title: `Step 3: Read AI Clue #${currentStage}`, description: `AI Clue: "${liveClue.riddle}" (${liveClue.hint})`, buttonText: "Check Rewards →", tooltipBottom: 130, onAction: () => { setModalTab('rewards'); setTutorialStep(4); } };
             case 4: return { title: "Step 4: Check Prize", description: "Prize: ₹50 OFF Coupon code for your cart when you find & add the secret item!", buttonText: "Go Hunt Item →", tooltipBottom: 130, onAction: () => { setShowModal(false); setScreen('home'); setTutorialStep(5); } };
-            case 5: return { title: "Step 5: Browse Category", description: "Navigate to Gaming where the products are located.", buttonText: "Go to Gaming →", tooltipTop: 130, onAction: () => { setScreen('category'); setSelectedCategory('Gaming'); setTutorialStep(6); } };
-            case 6: return { title: "Step 6: Try Non-Hunt Item (Mouse)", description: "Select Logitech G305 Wireless Mouse to test adding a normal product.", buttonText: "Open Mouse →", tooltipBottom: 65, onAction: () => { setSelectedProduct(PRODUCTS[2]); setScreen('pdp'); setTutorialStep(7); } };
-            case 7: return { title: "Step 7: Add Mouse to Cart", description: "Tap 'Add to Cart'. Notice that the coupon will remain 🔒 LOCKED because this is not the hunt item!", buttonText: "Add Mouse →", tooltipBottom: 65, onAction: () => { setCartCount(1); setScreen('cart'); setTutorialStep(8); } };
-            case 8: return { title: "Step 8: Coupon Remains Locked 🔒", description: "Notice ACCZ50OFF is 🔒 LOCKED (Full price ₹4,295). Now let's go back & find the real secret hunt item!", buttonText: "Find Secret Item →", tooltipTop: 80, onAction: () => { setScreen('category'); setTutorialStep(9); } };
-            case 9: return { title: "Step 9: Select Secret Hunt Item", description: "Select Zebronics MAX FURY RGB Gamepad (the item matching Clue 3!).", buttonText: "Open Gamepad →", tooltipBottom: 65, onAction: () => { setSelectedProduct(PRODUCTS[0]); setScreen('pdp'); setTutorialStep(10); } };
-            case 10: return { title: "Step 10: Add Secret Item to Cart", description: "Tap 'Add to Cart' to complete the Hunt and unlock your secret discount!", buttonText: "Add Gamepad →", tooltipBottom: 65, onAction: () => { setCartCount(1); setHuntUnlocked(true); setScreen('cart'); setTutorialStep(11); triggerConfetti(); } };
-            case 11: return { title: "Step 11: Coupon ACCZ50OFF Unlocked! 🎉", description: "Boom! Discovered Deal (-₹919) + Coupon ACCZ50OFF (-₹50) unlocked! Total: ₹1,030!", buttonText: "Finish Tour 🚀", tooltipTop: 80, onAction: () => { setTutorialStep(0); } };
+            case 5: return { title: `Step 5: Browse Category`, description: `Navigate to ${session.target_prod.category} where your target product is located.`, buttonText: `Go to ${session.target_prod.category} →`, tooltipTop: 130, onAction: () => { setScreen('category'); setSelectedCategory(session.target_prod.category); setTutorialStep(6); } };
+            case 6: return { title: "Step 6: Try Non-Hunt Item (Mouse)", description: "Select Logitech G305 Mouse to test adding a normal product.", buttonText: "Open Mouse →", tooltipBottom: 65, onAction: () => { const mouseP = session.products.find(p => p.id === 'mouse') || session.products[0]; setSelectedProduct(mouseP); setScreen('pdp'); setTutorialStep(7); } };
+            case 7: return { title: "Step 7: Add Mouse to Cart", description: "Tap 'Add to Cart'. Notice that the coupon will remain 🔒 LOCKED because this is not the secret hunt item!", buttonText: "Add Mouse →", tooltipBottom: 65, onAction: () => { setCartCount(1); setScreen('cart'); setTutorialStep(8); } };
+            case 8: return { title: "Step 8: Coupon Remains Locked 🔒", description: "Notice ACCZ50OFF is 🔒 LOCKED. Now let's go back & find the secret hunt item!", buttonText: "Find Secret Item →", tooltipTop: 80, onAction: () => { setScreen('category'); setTutorialStep(9); } };
+            case 9: return { title: "Step 9: Select Secret Hunt Item", description: `Select ${session.target_prod.name} (the item matching AI Clue #${currentStage}!).`, buttonText: "Open Target Item →", tooltipBottom: 65, onAction: () => { const targetP = session.products.find(p => p.id === currentTargetId) || session.products[0]; setSelectedProduct(targetP); setScreen('pdp'); setTutorialStep(10); } };
+            case 10: return { title: "Step 10: Add Secret Item to Cart", description: "Tap 'Add to Cart' to complete the Hunt and unlock your secret discount!", buttonText: "Add Target Item →", tooltipBottom: 65, onAction: () => { setCartCount(1); setHuntUnlocked(true); setScreen('cart'); setTutorialStep(11); triggerConfetti(); } };
+            case 11: return { title: "Step 11: Coupon ACCZ50OFF Unlocked! 🎉", description: `Boom! Discovered Deal + Coupon ACCZ50OFF unlocked for ${session.persona.name}!`, buttonText: "Finish Tour 🚀", tooltipTop: 80, onAction: () => { setTutorialStep(0); } };
             default: return null;
           }
         };
 
         const currentStepData = getTutorialStepData();
 
-        const filteredProducts = PRODUCTS.filter(p => {
+        const filteredProducts = session.products.filter(p => {
           const matchesCat = selectedCategory === 'All' || p.category === selectedCategory;
           const matchesSearch = !searchQuery || p.name.toLowerCase().includes(searchQuery.toLowerCase());
           return matchesCat && matchesSearch;
@@ -539,10 +831,23 @@ raw_html_template = """
                 {screen === 'home' && (
                   <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
                     <div className="home-header">
+                      <div className="persona-header-banner">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '1.2rem' }}>{session.persona.avatar}</span>
+                          <div>
+                            <div style={{ fontSize: '0.75rem', fontWeight: 800 }}>{session.persona.name}</div>
+                            <div style={{ fontSize: '0.58rem', opacity: 0.9 }}>{session.persona.title}</div>
+                          </div>
+                        </div>
+                        <div style={{ background: 'rgba(255,255,255,0.25)', padding: '2px 6px', borderRadius: '8px', fontSize: '0.58rem', fontWeight: 800 }}>
+                          {session.entry_flow === 'flow1_tutorial' ? '🎓 DEMO TOUR' : '⚡ AI PERSONA'}
+                        </div>
+                      </div>
+
                       <div className="location-bar">
                         <div>
-                          <div style={{ fontSize: '0.55rem', opacity: 0.8, fontWeight: 700 }}>DELIVERING TO</div>
-                          <div style={{ fontSize: '0.72rem', fontWeight: 700 }}>Home • Cyber City, Sector 24...</div>
+                          <div style={{ fontSize: '0.52rem', opacity: 0.8, fontWeight: 700 }}>DELIVERING TO</div>
+                          <div style={{ fontSize: '0.68rem', fontWeight: 700 }}>{session.persona.name} • Cyber City, Sec 24</div>
                         </div>
                         <div className="eta-pill">⚡ 6 minutes</div>
                       </div>
@@ -550,7 +855,7 @@ raw_html_template = """
                       <div className="search-box-wrap">
                         <input
                           className="search-input"
-                          placeholder='Search "Gamepad", "Apples", "Serum"...'
+                          placeholder={`Search "${session.target_prod.name.split(' ')[0]}", "Apples", "Serum"...`}
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
                         />
@@ -561,14 +866,14 @@ raw_html_template = """
                           <div
                             key={cat}
                             id={cat === 'Gaming' ? 'cat-chip-electronics' : undefined}
-                            className={`cat-chip ${selectedCategory === cat ? 'active' : ''} ${cat === 'Gaming' && tutorialStep === 5 ? 'highlight-box' : ''}`}
+                            className={`cat-chip ${selectedCategory === cat ? 'active' : ''} ${cat === session.target_prod.category && tutorialStep === 5 ? 'highlight-box' : ''}`}
                             onClick={() => {
                               setSelectedCategory(cat);
                               setScreen('category');
-                              if (cat === 'Gaming' && tutorialStep === 5) setTutorialStep(6);
+                              if (cat === session.target_prod.category && tutorialStep === 5) setTutorialStep(6);
                             }}
                           >
-                            {cat === 'Gaming' ? '⚡ ' : ''}{cat}
+                            {cat === session.target_prod.category ? '⚡ ' : ''}{cat}
                           </div>
                         ))}
                       </div>
@@ -579,15 +884,15 @@ raw_html_template = """
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <span style={{ fontSize: '1.3rem' }}>🎯</span>
                           <div>
-                            <div style={{ fontSize: '0.62rem', fontWeight: 800, opacity: 0.9 }}>LIMITED TIME EVENT</div>
-                            <div style={{ fontSize: '0.85rem', fontWeight: 900 }}>PRODUCT HUNT WEEK</div>
+                            <div style={{ fontSize: '0.58rem', fontWeight: 800, opacity: 0.9 }}>GROQ LLM GENERATED • CLUE #{currentStage}</div>
+                            <div style={{ fontSize: '0.82rem', fontWeight: 900 }}>{liveClue.clue_title || "PRODUCT HUNT WEEK"}</div>
                           </div>
                         </div>
                         <button style={{ background: 'white', color: '#ff3269', border: 'none', padding: '3px 8px', borderRadius: '12px', fontWeight: 800, fontSize: '0.68rem' }}>PLAY NOW →</button>
                       </div>
 
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div style={{ fontSize: '0.8rem', fontWeight: 900, color: '#334155' }}>Trending Catalog ({filteredProducts.length})</div>
+                        <div style={{ fontSize: '0.78rem', fontWeight: 900, color: '#334155' }}>Personalized Catalog ({filteredProducts.length})</div>
                         <span style={{ fontSize: '0.68rem', color: '#0c831f', fontWeight: 800, cursor: 'pointer' }} onClick={() => setScreen('category')}>View All →</span>
                       </div>
 
@@ -595,37 +900,25 @@ raw_html_template = """
                         {filteredProducts.slice(0, 4).map(prod => (
                           <div
                             key={prod.id}
-                            id={prod.id === 'gamepad' ? 'product-card-gamepad' : undefined}
+                            id={prod.id === 'gamepad' ? 'product-card-gamepad' : (prod.id === 'mouse' ? 'product-card-mouse' : undefined)}
                             className="product-card"
                             onClick={() => {
                               setSelectedProduct(prod);
                               setScreen('pdp');
-                              if (prod.id === 'gamepad' && tutorialStep === 6) setTutorialStep(7);
+                              if (prod.id === 'mouse' && tutorialStep === 6) setTutorialStep(7);
+                              if (prod.id === currentTargetId && tutorialStep === 9) setTutorialStep(10);
                             }}
                           >
                             <div className="product-img-wrap">
                               <img src={prod.image} alt={prod.name} />
                             </div>
                             <div className="product-title">{prod.name}</div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '3px' }}>
-                              <div className="product-price">
-                                ₹{prod.price}
-                              </div>
-                              <button style={{ background: '#0c831f', color: 'white', border: 'none', padding: '3px 6px', borderRadius: '6px', fontSize: '0.65rem', fontWeight: 800 }}>ADD</button>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div className="product-price">₹{prod.price.toLocaleString()}</div>
+                              <span style={{ fontSize: '0.58rem', color: '#0c831f', fontWeight: 800 }}>Add +</span>
                             </div>
                           </div>
                         ))}
-                      </div>
-                    </div>
-
-                    <div className="bottom-nav-bar">
-                      <div className="nav-item active"><span>Home</span></div>
-                      <div className="nav-item" onClick={() => setScreen('category')}><span>Categories</span></div>
-                      <div className="nav-item"><span>Buy Again</span></div>
-                      <div className="nav-item"><span>Print</span></div>
-                      <div id="nav-hunt-btn" className="nav-item hunt-highlight" onClick={() => { setShowModal(true); setModalTab('walkthrough'); if(tutorialStep===1) setTutorialStep(2); }}>
-                        <span className="hunt-badge">EVENT</span>
-                        <span>🔥 Hunt</span>
                       </div>
                     </div>
                   </div>
@@ -634,46 +927,28 @@ raw_html_template = """
                 {screen === 'category' && (
                   <div style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '10px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                      <button onClick={() => setScreen('home')} style={{ border: 'none', background: 'none', fontSize: '1.1rem', cursor: 'pointer' }}>←</button>
-                      <input className="search-input" value={selectedCategory + " Category Catalog"} readOnly style={{ background: '#e2e8f0' }} />
+                      <button style={{ background: '#e2e8f0', border: 'none', borderRadius: '50%', width: '26px', height: '26px', fontWeight: 800 }} onClick={() => setScreen('home')}>←</button>
+                      <div style={{ fontSize: '0.9rem', fontWeight: 900 }}>Category: {selectedCategory}</div>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '5px', overflowX: 'auto', marginBottom: '10px' }}>
-                      {['All', 'Gaming', 'Fresh', 'Personal', 'Pet Store', 'Snacks'].map(cat => (
-                        <div
-                          key={cat}
-                          className={`cat-chip ${selectedCategory === cat ? 'active' : ''}`}
-                          style={{ color: selectedCategory === cat ? '#0c831f' : '#64748b', background: selectedCategory === cat ? '#e6f4ea' : '#f1f5f9' }}
-                          onClick={() => setSelectedCategory(cat)}
-                        >
-                          {cat}
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="product-grid" style={{ flex: 1, overflowY: 'auto' }}>
+                    <div className="product-grid">
                       {filteredProducts.map(prod => (
                         <div
                           key={prod.id}
-                          id={prod.id === 'mouse' ? 'product-card-mouse' : (prod.id === 'gamepad' ? 'product-card-gamepad' : undefined)}
+                          id={prod.id === 'gamepad' ? 'product-card-gamepad' : (prod.id === 'mouse' ? 'product-card-mouse' : undefined)}
                           className="product-card"
                           onClick={() => {
                             setSelectedProduct(prod);
                             setScreen('pdp');
                             if (prod.id === 'mouse' && tutorialStep === 6) setTutorialStep(7);
-                            if (prod.id === 'gamepad' && tutorialStep === 9) setTutorialStep(10);
+                            if (prod.id === currentTargetId && tutorialStep === 9) setTutorialStep(10);
                           }}
                         >
                           <div className="product-img-wrap">
                             <img src={prod.image} alt={prod.name} />
                           </div>
                           <div className="product-title">{prod.name}</div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '3px' }}>
-                            <div className="product-price">
-                              ₹{prod.price}
-                            </div>
-                            <button style={{ background: '#0c831f', color: 'white', border: 'none', padding: '3px 6px', borderRadius: '6px', fontSize: '0.65rem', fontWeight: 800 }}>ADD</button>
-                          </div>
+                          <div className="product-price">₹{prod.price.toLocaleString()}</div>
                         </div>
                       ))}
                     </div>
@@ -682,232 +957,189 @@ raw_html_template = """
 
                 {screen === 'pdp' && selectedProduct && (
                   <div style={{ display: 'flex', flexDirection: 'column', flex: 1, position: 'relative' }}>
-                    <div style={{ padding: '8px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <button onClick={() => setScreen('category')} style={{ border: 'none', background: 'none', fontSize: '0.9rem', fontWeight: 700, cursor: 'pointer' }}>← Back</button>
-                      <span style={{ fontSize: '0.7rem', fontWeight: 800, color: '#0c831f' }}>⚡ 6 MINS DELIVERY</span>
+                    <div style={{ position: 'absolute', top: '10px', left: '10px', zindex: 20 }}>
+                      <button style={{ background: 'white', border: 'none', borderRadius: '50%', width: '28px', height: '28px', fontWeight: 800, boxShadow: '0 2px 6px rgba(0,0,0,0.15)' }} onClick={() => setScreen('home')}>←</button>
                     </div>
+
                     <div className="pdp-image-box">
                       <img src={selectedProduct.image} alt={selectedProduct.name} />
                       <div className="rating-badge">{selectedProduct.rating}</div>
                     </div>
+
                     <div className="pdp-info-card">
                       <div className="pdp-title">{selectedProduct.name}</div>
-                      <p style={{ fontSize: '0.7rem', color: '#64748b', marginBottom: '8px' }}>{selectedProduct.desc}</p>
-                      <div style={{ fontSize: '1.1rem', fontWeight: 900 }}>
-                        ₹{selectedProduct.price}
+                      <div style={{ fontSize: '0.68rem', color: '#64748b', marginBottom: '8px' }}>Category: {selectedProduct.category}</div>
+                      <div style={{ fontSize: '1.1rem', fontWeight: 900, color: '#0f172a', marginBottom: '8px' }}>
+                        ₹{selectedProduct.price.toLocaleString()}
+                      </div>
+                      <div style={{ fontSize: '0.72rem', color: '#334155', lineHeight: 1.4, background: '#f8fafc', padding: '8px', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                        {selectedProduct.desc}
                       </div>
                     </div>
+
                     <div className="sticky-bottom-add">
                       <button
                         id="btn-add-to-cart-pdp"
                         className="btn-add-cart-pink"
                         onClick={() => {
                           setCartCount(1);
-                          setScreen('cart');
-                          if (selectedProduct.isHuntItem) {
+                          const isTarget = selectedProduct.id === currentTargetId;
+                          if (isTarget) {
                             setHuntUnlocked(true);
-                            if (tutorialStep === 10) {
-                              setTutorialStep(11);
-                              triggerConfetti();
-                            }
-                          } else {
-                            if (tutorialStep === 7) {
-                              setTutorialStep(8);
-                            }
+                            triggerConfetti();
                           }
+                          setScreen('cart');
+                          if (selectedProduct.id === 'mouse' && tutorialStep === 7) setTutorialStep(8);
+                          if (isTarget && tutorialStep === 10) setTutorialStep(11);
                         }}
                       >
-                        Add to Cart • ₹{selectedProduct.price}
+                        ⚡ ADD TO CART • ₹{selectedProduct.price.toLocaleString()}
                       </button>
                     </div>
                   </div>
                 )}
 
                 {screen === 'cart' && (
-                  <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflowY: 'auto', paddingBottom: '60px', background: '#f1f5f9' }}>
-                    {/* Cart Top Header */}
-                    <div style={{ background: 'white', padding: '6px 10px', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #e2e8f0' }}>
-                      <button onClick={() => setScreen('category')} style={{ border: 'none', background: 'none', fontSize: '0.9rem', fontWeight: 800, cursor: 'pointer' }}>←</button>
-                      <div>
-                        <div style={{ fontSize: '0.72rem', fontWeight: 900 }}>Home 📍</div>
-                        <div style={{ fontSize: '0.55rem', color: '#64748b' }}>Flat 1002, Building A, Cyber City...</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', flex: 1, padding: '12px', background: '#f8fafc' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                      <button style={{ background: '#e2e8f0', border: 'none', borderRadius: '50%', width: '26px', height: '26px', fontWeight: 800 }} onClick={() => setScreen('home')}>←</button>
+                      <div style={{ fontSize: '0.9rem', fontWeight: 900 }}>My Cart ({cartCount} item)</div>
+                    </div>
+
+                    {selectedProduct && (
+                      <div style={{ background: 'white', padding: '10px', borderRadius: '12px', display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '10px', border: '1px solid #e2e8f0' }}>
+                        <img src={selectedProduct.image} style={{ width: '45px', height: '45px', borderRadius: '6px', objectFit: 'cover' }} />
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: '0.75rem', fontWeight: 800 }}>{selectedProduct.name}</div>
+                          <div style={{ fontSize: '0.72rem', fontWeight: 900 }}>₹{selectedProduct.price.toLocaleString()}</div>
+                        </div>
                       </div>
-                    </div>
+                    )}
 
-                    {/* Savings Alert Banner */}
-                    <div style={{ background: '#dcfce7', color: '#15803d', padding: '5px 10px', fontSize: '0.62rem', fontWeight: 800, textAlign: 'center' }}>
-                      🎉 Yay! You saved ₹{selectedProduct.mrp - selectedProduct.price + 50} on this order
-                    </div>
-
-                    {/* Coupons & Offers Card */}
-                    <div style={{ background: 'white', margin: '4px 0', padding: '6px 10px' }}>
-                      <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#475569', marginBottom: '4px' }}>Coupons & Offers</div>
-                      {(huntUnlocked || selectedProduct.isHuntItem) ? (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f0fdf4', border: '1px dashed #22c55e', padding: '5px 8px', borderRadius: '8px', marginBottom: '4px' }}>
-                          <div>
-                            <div style={{ fontSize: '0.62rem', fontWeight: 900, color: '#16a34a' }}>Save ₹50 with ACCZ50OFF</div>
-                            <div style={{ fontSize: '0.52rem', color: '#64748b' }}>Product Hunt Unlocked Reward</div>
+                    <div id="cart-hunt-card-target" className="cart-hunt-card">
+                      {huntUnlocked ? (
+                        <div>
+                          <div style={{ fontSize: '0.85rem', fontWeight: 900, color: '#0c831f' }}>🎉 PRODUCT HUNT COUPON UNLOCKED!</div>
+                          <div className="coupon-code-badge">ACCZ50OFF APPLIED (-₹50)</div>
+                          <div style={{ fontSize: '0.68rem', color: '#16a34a', fontWeight: 700, margin: '4px 0' }}>
+                            Discovered Deal: ₹{selectedProduct.price.toLocaleString()} ➔ ₹{(selectedProduct.price > 1000 ? 1080 : selectedProduct.price - 50).toLocaleString()}!
                           </div>
-                          <span style={{ background: '#22c55e', color: 'white', fontSize: '0.55rem', fontWeight: 900, padding: '2px 6px', borderRadius: '6px' }}>Applied ✓</span>
                         </div>
                       ) : (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', border: '1px dashed #cbd5e1', padding: '5px 8px', borderRadius: '8px', marginBottom: '4px' }}>
-                          <div>
-                            <div style={{ fontSize: '0.62rem', fontWeight: 800, color: '#64748b' }}>Save ₹50 with ACCZ50OFF</div>
-                            <div style={{ fontSize: '0.52rem', color: '#94a3b8' }}>🔒 Find secret item in Gaming to unlock</div>
-                          </div>
-                          <span style={{ color: '#94a3b8', fontSize: '0.55rem', fontWeight: 800 }}>Locked 🔒</span>
-                        </div>
-                      )}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', border: '1px solid #e2e8f0', padding: '5px 8px', borderRadius: '8px' }}>
                         <div>
-                          <div style={{ fontSize: '0.62rem', fontWeight: 800, color: '#334155' }}>Save ₹40 with CRAZE40</div>
-                          <div style={{ fontSize: '0.52rem', color: '#64748b' }}>On orders above ₹499</div>
-                        </div>
-                        <span style={{ color: '#ff3269', fontSize: '0.55rem', fontWeight: 800, cursor: 'pointer' }}>Apply</span>
-                      </div>
-                    </div>
-
-                    {/* Delivery Info */}
-                    <div style={{ background: 'white', margin: '0 0 4px 0', padding: '6px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <div style={{ fontSize: '0.65rem', fontWeight: 900, color: '#0f172a' }}>⚡ Delivery in 10 mins</div>
-                        <div style={{ fontSize: '0.55rem', color: '#64748b' }}>Superfast Express Delivery</div>
-                      </div>
-                      <span style={{ fontSize: '0.58rem', fontWeight: 800, color: '#0c831f' }}>Schedule →</span>
-                    </div>
-
-                    {/* Cart Item Row */}
-                    <div style={{ background: 'white', padding: '6px 10px', marginBottom: '4px' }}>
-                      <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#475569', marginBottom: '4px' }}>Cart Item</div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <img src={selectedProduct.image} alt={selectedProduct.name} style={{ width: '36px', height: '36px', objectFit: 'contain', borderRadius: '6px' }} />
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#0f172a', lineHeight: 1.2 }}>{selectedProduct.name}</div>
-                          <div style={{ fontSize: '0.62rem', fontWeight: 900, color: '#0f172a', marginTop: '2px' }}>
-                            ₹{selectedProduct.price} <span style={{ fontSize: '0.52rem', textDecoration: 'line-through', color: '#94a3b8' }}>₹{selectedProduct.mrp}</span>
+                          <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#64748b' }}>🔒 HUNT COUPON LOCKED</div>
+                          <div style={{ fontSize: '0.65rem', color: '#94a3b8', margin: '3px 0' }}>
+                            Coupon ACCZ50OFF is locked. Add the secret Hunt product matching AI Clue #{currentStage} to unlock!
                           </div>
                         </div>
-                        {/* Quantity Counter */}
-                        <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #cbd5e1', borderRadius: '6px', background: '#f8fafc' }}>
-                          <button style={{ border: 'none', background: 'none', padding: '1px 5px', fontWeight: 900, fontSize: '0.7rem', cursor: 'pointer' }}>-</button>
-                          <span style={{ fontSize: '0.62rem', fontWeight: 800, padding: '0 3px' }}>1</span>
-                          <button style={{ border: 'none', background: 'none', padding: '1px 5px', fontWeight: 900, fontSize: '0.7rem', cursor: 'pointer' }}>+</button>
-                        </div>
-                      </div>
-                      <div style={{ fontSize: '0.55rem', color: '#ff3269', fontWeight: 700, marginTop: '4px', cursor: 'pointer' }}>+ Add 1 More Item</div>
+                      )}
                     </div>
 
-                    {/* Bill Details */}
-                    <div style={{ background: 'white', padding: '6px 10px', marginBottom: '4px' }}>
-                      <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#475569', marginBottom: '4px' }}>Bill Details</div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.58rem', color: '#64748b', marginBottom: '2px' }}>
-                        <span>Item Regular Price</span>
-                        <span>₹{selectedProduct.price}</span>
+                    <div style={{ background: 'white', padding: '12px', borderRadius: '12px', marginTop: 'auto', border: '1px solid #e2e8f0' }}>
+                      <div style={{ fontSize: '0.75rem', fontWeight: 900, marginBottom: '6px' }}>Bill Details</div>
+                      <div style={{ display: 'flex', justifycontent: 'space-between', fontSize: '0.68rem', margin: '2px 0' }}>
+                        <span>Item Total</span>
+                        <span>₹{selectedProduct ? selectedProduct.price.toLocaleString() : 0}</span>
                       </div>
-                      {selectedProduct.isHuntItem && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.58rem', color: '#16a34a', marginBottom: '2px' }}>
-                          <span>Product Hunt Discovered Deal (₹1999 → ₹1080)</span>
-                          <span>-₹919</span>
+                      {huntUnlocked && (
+                        <div style={{ display: 'flex', justifycontent: 'space-between', fontSize: '0.68rem', color: '#0c831f', fontWeight: 700, margin: '2px 0' }}>
+                          <span>Hunt Discovered Coupon (ACCZ50OFF)</span>
+                          <span>-₹{(selectedProduct.price > 1000 ? (selectedProduct.price - 1030) : 50).toLocaleString()}</span>
                         </div>
                       )}
-                      {(huntUnlocked || selectedProduct.isHuntItem) && (
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.58rem', color: '#16a34a', marginBottom: '2px' }}>
-                          <span>Hunt Clue 3 Coupon (ACCZ50OFF)</span>
-                          <span>-₹50</span>
-                        </div>
-                      )}
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.58rem', color: '#64748b', marginBottom: '3px' }}>
+                      <div style={{ display: 'flex', justifycontent: 'space-between', fontSize: '0.68rem', margin: '2px 0' }}>
                         <span>Delivery Fee</span>
-                        <span style={{ color: '#16a34a', fontWeight: 800 }}>FREE</span>
+                        <span style={{ color: '#0c831f', fontWeight: 800 }}>FREE</span>
                       </div>
-                      <div style={{ borderTop: '1px dashed #cbd5e1', paddingTop: '3px', display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', fontWeight: 900, color: '#0f172a' }}>
+                      <hr style={{ margin: '6px 0', borderColor: '#e2e8f0' }} />
+                      <div style={{ display: 'flex', justifycontent: 'space-between', fontSize: '0.85rem', fontWeight: 900 }}>
                         <span>To Pay</span>
-                        <span>
-                          ₹{selectedProduct.isHuntItem
-                              ? 1030
-                              : ((huntUnlocked) ? Math.max(0, selectedProduct.price - 50) : selectedProduct.price)
-                           }
-                        </span>
+                        <span>₹{huntUnlocked ? (selectedProduct.price > 1000 ? 1030 : selectedProduct.price - 50).toLocaleString() : (selectedProduct ? selectedProduct.price.toLocaleString() : 0)}</span>
                       </div>
-                    </div>
-
-                    {/* Product Hunt Card */}
-                    <div className="cart-hunt-card" id="cart-hunt-card-target" style={{ margin: '4px 10px 10px 10px', padding: '8px' }}>
-                      <div className="clue-progress-bar" style={{ marginBottom: '4px' }}>
-                        <div className="clue-badge done">✓</div>
-                        <div className="clue-badge done">✓</div>
-                        <div className={`clue-badge ${huntUnlocked || selectedProduct.isHuntItem ? 'done' : 'current'}`} style={{ background: (huntUnlocked || selectedProduct.isHuntItem) ? '#22c55e' : undefined }}>
-                          {(huntUnlocked || selectedProduct.isHuntItem) ? '✓' : '3'}
-                        </div>
-                      </div>
-                      <div className="coupon-code-badge" style={{ fontSize: '0.65rem' }}>
-                        {(huntUnlocked || selectedProduct.isHuntItem) ? 'COUPON CODE: ACCZ50OFF' : 'COUPON CODE: ACCZ**** (LOCKED)'}
-                      </div>
-                      <div style={{ fontSize: '0.85rem', fontWeight: 900, color: (huntUnlocked || selectedProduct.isHuntItem) ? '#15803d' : '#ea580c' }}>
-                        {(huntUnlocked || selectedProduct.isHuntItem) ? 'Congratulations !!! 🎉' : '🎯 Clue 3 Hunt In Progress'}
-                      </div>
-                      <div style={{ fontSize: '0.62rem', color: (huntUnlocked || selectedProduct.isHuntItem) ? '#166534' : '#475569' }}>
-                        {(huntUnlocked || selectedProduct.isHuntItem)
-                          ? 'Clue 3 Complete! You unlocked ₹50 OFF + Free Delivery on this order.'
-                          : 'Find the secret item in Gaming & add to cart to unlock ₹50 OFF coupon!'}
-                      </div>
-                    </div>
-
-                    {/* Sticky Bottom Bar */}
-                    <div className="sticky-bottom-add" style={{ padding: '6px 10px', background: 'white', borderTop: '1px solid #e2e8f0' }}>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: '0.52rem', color: '#64748b' }}>Pay via PhonePe / UPI</div>
-                        <div style={{ fontSize: '0.78rem', fontWeight: 900, color: '#0f172a' }}>
-                          ₹{selectedProduct.isHuntItem
-                              ? 1030
-                              : ((huntUnlocked) ? Math.max(0, selectedProduct.price - 50) : selectedProduct.price)
-                           }
-                        </div>
-                      </div>
-                      <button className="btn-add-cart-pink" style={{ flex: 'none', width: '120px', padding: '7px', fontSize: '0.75rem' }} onClick={() => alert('🎉 Order Placed Successfully!')}>
-                        Pay ₹{selectedProduct.isHuntItem
-                              ? 1030
-                              : ((huntUnlocked) ? Math.max(0, selectedProduct.price - 50) : selectedProduct.price)
-                           }
+                      <button style={{ width: '100%', background: '#0c831f', color: 'white', border: 'none', padding: '10px', borderRadius: '10px', fontWeight: 900, marginTop: '8px', fontSize: '0.82rem', cursor: 'pointer' }}>
+                        PROCEED TO PAY ⚡
                       </button>
                     </div>
                   </div>
                 )}
+              </div>
 
-                {showModal && (
-                  <div className="modal-overlay">
-                    <div className="modal-card">
-                      <div className="modal-close-btn" onClick={() => setShowModal(false)}>✕</div>
-                      <div className="modal-header-title" style={{ marginBottom: '2px' }}>PRODUCT HUNT WEEK</div>
-                      <div style={{ fontSize: '0.62rem', fontWeight: 800, color: '#ff3269', textAlign: 'center', marginBottom: '8px' }}>⏳ 3 days remaining!</div>
+              {/* Bottom Navigation */}
+              <div className="bottom-nav-bar">
+                <div className={`nav-item ${screen==='home'?'active':''}`} onClick={() => setScreen('home')}>
+                  <span style={{fontSize:'1rem'}}>🏠</span>
+                  <span>Home</span>
+                </div>
+                <div className={`nav-item ${screen==='category'?'active':''}`} onClick={() => setScreen('category')}>
+                  <span style={{fontSize:'1rem'}}>🛍️</span>
+                  <span>Categories</span>
+                </div>
+                <div className={`nav-item ${screen==='cart'?'active':''}`} onClick={() => setScreen('cart')}>
+                  <span style={{fontSize:'1rem'}}>🛒</span>
+                  <span>Cart ({cartCount})</span>
+                </div>
+                <div id="nav-hunt-btn" className="nav-item hunt-highlight" onClick={() => { setShowModal(true); setModalTab('walkthrough'); if(tutorialStep===1) setTutorialStep(2); }}>
+                  <span className="hunt-badge">AI LIVE</span>
+                  <span style={{fontSize:'1rem'}}>🎯</span>
+                  <span>🔥 Hunt</span>
+                </div>
+              </div>
 
+              {/* MODAL OVERLAY CARD */}
+              {showModal && (
+                <div className="modal-overlay">
+                  <div className="modal-card">
+                    <div className="modal-close-btn" onClick={() => setShowModal(false)}>✕</div>
+                    
+                    <div className="modal-header-title">🎯 Zepto Product Hunt</div>
+
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                       {modalTab === 'walkthrough' && (
                         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
                           {walkthroughSlide === 1 && (
                             <div>
-                              <div style={{ fontSize: '0.72rem', fontWeight: 800, color: '#334155', marginBottom: '8px' }}>How it works</div>
-                              <div className="step-card"><div className="step-icon-wrap step-icon-1">🛍️</div><div><strong style={{fontSize:'0.72rem'}}>STEP 1: Buy Products</strong><br/><span style={{fontSize:'0.62rem', color:'#64748b'}}>Select products with the Hunt badge to get started.</span></div></div>
-                              <div className="step-card"><div className="step-icon-wrap step-icon-2">🗝️</div><div><strong style={{fontSize:'0.72rem'}}>STEP 2: Unlock Clues</strong><br/><span style={{fontSize:'0.62rem', color:'#64748b'}}>Every purchase unlocks a mystery clue in your Hunt dashboard.</span></div></div>
-                              <div className="step-card"><div className="step-icon-wrap step-icon-3">🔍</div><div><strong style={{fontSize:'0.72rem'}}>STEP 3: Find the Item</strong><br/><span style={{fontSize:'0.62rem', color:'#64748b'}}>Use your clues to solve the puzzle and locate the secret item.</span></div></div>
-                              <div className="step-card"><div className="step-icon-wrap step-icon-4">🏷️</div><div><strong style={{fontSize:'0.72rem'}}>STEP 4: Get Discount</strong><br/><span style={{fontSize:'0.62rem', color:'#64748b'}}>Add the secret item to your cart and watch the price drop!</span></div></div>
+                              <div style={{ fontSize: '0.78rem', fontWeight: 800, textAlign: 'center', marginBottom: '8px', color: '#334155' }}>
+                                How Product Hunt Works
+                              </div>
+                              <div className="step-card">
+                                <div className="step-icon-wrap step-icon-1">🛍️</div>
+                                <div>
+                                  <div style={{ fontSize: '0.72rem', fontWeight: 800 }}>1. Shop & Explore</div>
+                                  <div style={{ fontSize: '0.62rem', color: '#64748b' }}>Browse your favorite daily groceries & categories.</div>
+                                </div>
+                              </div>
+                              <div className="step-card">
+                                <div className="step-icon-wrap step-icon-2">🧩</div>
+                                <div>
+                                  <div style={{ fontSize: '0.72rem', fontWeight: 800 }}>2. AI Riddle Clues</div>
+                                  <div style={{ fontSize: '0.62rem', color: '#64748b' }}>Groq LLM generates dynamic riddle clues tailored to your history!</div>
+                                </div>
+                              </div>
+                              <div className="step-card">
+                                <div className="step-icon-wrap step-icon-3">🔍</div>
+                                <div>
+                                  <div style={{ fontSize: '0.72rem', fontWeight: 800 }}>3. Find Secret Product</div>
+                                  <div style={{ fontSize: '0.62rem', color: '#64748b' }}>Deduce the mystery product from the AI riddle.</div>
+                                </div>
+                              </div>
                             </div>
                           )}
 
                           {walkthroughSlide === 2 && (
                             <div>
                               <div className="clue-progress-bar">
-                                <div className="clue-badge done">✓</div>
-                                <div className="clue-badge done">✓</div>
-                                <div className="clue-badge current">3</div>
-                                <div className="clue-badge">🔒</div>
+                                <div className={`clue-badge ${currentStage >= 1 ? 'done' : ''}`}>1</div>
+                                <div className={`clue-badge ${currentStage >= 2 ? 'done' : (currentStage === 2 ? 'current' : '')}`}>2</div>
+                                <div className={`clue-badge ${currentStage === 3 ? 'current' : ''}`}>3</div>
                               </div>
-                              <div style={{ fontSize: '0.58rem', fontWeight: 900, color: '#16a34a', textAlign: 'center', marginBottom: '2px' }}>CLUE 3: THE GHOST IN THE LIVING ROOM</div>
-                              <div style={{ fontSize: '0.82rem', fontWeight: 900, textAlign: 'center', marginBottom: '10px' }}>Current Challenge</div>
+                              <div style={{ fontSize: '0.58rem', fontWeight: 900, color: '#16a34a', textAlign: 'center', marginBottom: '2px' }}>
+                                GROQ LLM CLUE #{currentStage}: {liveClue.clue_title || 'MYSTERY RIDDLE'}
+                              </div>
+                              <div style={{ fontSize: '0.82rem', fontWeight: 900, textAlign: 'center', marginBottom: '10px' }}>Active Challenge</div>
 
                               <div className="clue-box">
-                                <p className="clue-riddle">"I test friendships, press your buttons, and turn grown adults into yelling kids at 2 AM. I live right next to your TV. What am I?"</p>
-                                <div className="hint-pill-btn" style={{ display: 'inline-block' }}>Hint: Check Gaming</div>
+                                <p className="clue-riddle">"{liveClue.riddle}"</p>
+                                <div className="hint-pill-btn" style={{ display: 'inline-block' }}>{liveClue.hint}</div>
                               </div>
                             </div>
                           )}
@@ -918,7 +1150,6 @@ raw_html_template = """
                               <div style={{ fontSize: '1.15rem', fontWeight: 900, margin: '4px 0' }}>Prize: ₹50 OFF</div>
                               <p style={{ fontSize: '0.68rem', opacity: 0.9, marginBottom: '10px' }}>Unlock this mystery coupon for your next cart!</p>
                               <button className="unlock-now-btn" onClick={() => setModalTab('rewards')}>⚡ Check My Rewards</button>
-                              <div style={{ fontSize: '0.55rem', opacity: 0.7, marginTop: '6px' }}>Valid for next 12 hours only</div>
                             </div>
                           )}
 
@@ -934,27 +1165,17 @@ raw_html_template = """
                         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
                           <div style={{ overflowY: 'auto' }}>
                             <div className="clue-progress-bar">
-                              <div className="clue-badge done">✓</div>
-                              <div className="clue-badge done">✓</div>
-                              <div className="clue-badge current">3</div>
-                              <div className="clue-badge">🔒</div>
+                              <div className={`clue-badge ${currentStage >= 1 ? 'done' : ''}`}>1</div>
+                              <div className={`clue-badge ${currentStage >= 2 ? 'done' : (currentStage === 2 ? 'current' : '')}`}>2</div>
+                              <div className={`clue-badge ${currentStage === 3 ? 'current' : ''}`}>3</div>
                             </div>
-                            <div style={{ fontSize: '0.62rem', fontWeight: 900, color: '#16a34a', textAlign: 'center', marginBottom: '6px' }}>MY UNLOCKED CLUES</div>
-
-                            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '6px 10px', marginBottom: '6px' }}>
-                              <div style={{ fontSize: '0.58rem', fontWeight: 900, color: '#16a34a' }}>✓ CLUE 1 UNLOCKED</div>
-                              <div style={{ fontSize: '0.65rem', fontStyle: 'italic', color: '#334155' }}>"Looking for crunch? Check snack aisles..."</div>
-                            </div>
-
-                            <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '6px 10px', marginBottom: '6px' }}>
-                              <div style={{ fontSize: '0.58rem', fontWeight: 900, color: '#16a34a' }}>✓ CLUE 2 UNLOCKED</div>
-                              <div style={{ fontSize: '0.65rem', fontStyle: 'italic', color: '#334155' }}>"Need fresh greens? Check fruits & veg..."</div>
-                            </div>
+                            <div style={{ fontSize: '0.62rem', fontWeight: 900, color: '#16a34a', textAlign: 'center', marginBottom: '6px' }}>AI CLUE PROGRESSION</div>
 
                             <div className="clue-box" style={{ margin: '4px 0 0 0', padding: '8px 10px' }}>
-                              <div style={{ fontSize: '0.55rem', fontWeight: 900, color: '#c2410c', marginBottom: '2px' }}>🎯 CLUE 3 ACTIVE CHALLENGE</div>
-                              <p className="clue-riddle" style={{ fontSize: '0.68rem', margin: '3px 0' }}>"I test friendships, press your buttons, and turn grown adults into yelling kids at 2 AM. I live right next to your TV. What am I?"</p>
-                              <div className="hint-pill-btn" style={{ display: 'inline-block', fontSize: '0.58rem', padding: '2px 8px' }}>Hint: Check Gaming</div>
+                              <div style={{ fontSize: '0.58rem', fontWeight: 900, color: '#c2410c', marginBottom: '2px' }}>🎯 CLUE #{currentStage} ACTIVE (Groq Llama-3.3)</div>
+                              <div style={{ fontSize: '0.65rem', fontWeight: 800, color: '#16a34a', marginBottom: '2px' }}>{liveClue.clue_title}</div>
+                              <p className="clue-riddle" style={{ fontSize: '0.68rem', margin: '3px 0' }}>"{liveClue.riddle}"</p>
+                              <div className="hint-pill-btn" style={{ display: 'inline-block', fontSize: '0.58rem', padding: '2px 8px' }}>{liveClue.hint}</div>
                             </div>
                           </div>
                         </div>
@@ -962,14 +1183,14 @@ raw_html_template = """
 
                       {modalTab === 'rewards' && (
                         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
-                          {(huntUnlocked || (selectedProduct && selectedProduct.isHuntItem && cartCount > 0)) ? (
+                          {huntUnlocked ? (
                             <div className="reward-card-purple" style={{ background: 'linear-gradient(135deg, #0c831f, #10b981)', padding: '16px' }}>
                               <div style={{ fontSize: '1.8rem' }}>🎉 🎖️</div>
                               <div style={{ fontSize: '1.1rem', fontWeight: 900, margin: '4px 0' }}>Prize: ₹50 OFF UNLOCKED!</div>
                               <div style={{ background: 'white', color: '#0c831f', padding: '5px 12px', borderRadius: '8px', fontWeight: 900, fontSize: '0.8rem', display: 'inline-block', margin: '8px 0' }}>
                                 COUPON CODE: ACCZ50OFF
                               </div>
-                              <p style={{ fontSize: '0.68rem', opacity: 0.95, margin: '4px 0' }}>Congratulations! Coupon is auto-applied to your checkout order.</p>
+                              <p style={{ fontSize: '0.68rem', opacity: 0.95, margin: '4px 0' }}>Congratulations {session.persona.name}! Coupon auto-applied.</p>
                               <button className="unlock-now-btn" style={{ color: '#0c831f', marginTop: '10px' }} onClick={() => { setShowModal(false); setScreen('cart'); }}>⚡ View Cart & Pay</button>
                             </div>
                           ) : (
@@ -979,9 +1200,9 @@ raw_html_template = """
                               <div style={{ background: '#e2e8f0', color: '#64748b', padding: '5px 12px', borderRadius: '8px', fontWeight: 800, fontSize: '0.78rem', display: 'inline-block', margin: '8px 0', filter: 'blur(3px)', userSelect: 'none' }}>
                                 COUPON: ACCZ50OFF
                               </div>
-                              <p style={{ fontSize: '0.68rem', color: '#64748b', margin: '6px 0' }}>Add the secret Hunt product (Gamepad) to your cart to unlock this coupon!</p>
+                              <p style={{ fontSize: '0.68rem', color: '#64748b', margin: '6px 0' }}>Add the secret product matching AI Clue #{currentStage} to your cart to unlock!</p>
                               <button disabled style={{ background: '#e2e8f0', color: '#94a3b8', border: 'none', width: '100%', padding: '8px', borderRadius: '10px', fontSize: '0.78rem', fontWeight: 800, marginTop: '10px', cursor: 'not-allowed' }}>
-                                🔒 Locked (Find Hunt Item to Unlock)
+                                🔒 Locked (Find Target Item to Unlock)
                               </button>
                             </div>
                           )}
@@ -1039,5 +1260,6 @@ raw_html_template = """
 </html>
 """
 
-final_html = raw_html_template.replace("__DEMO_MODE__", st.session_state.demo_mode)
+payload_json = json.dumps(react_session_payload)
+final_html = raw_html_template.replace("__SESSION_PAYLOAD__", payload_json).replace("__DEMO_MODE__", st.session_state.demo_mode)
 components.html(final_html, height=650, scrolling=False)
