@@ -1,108 +1,113 @@
-<mxfile host="Electron" modified="2026-08-04T03:35:00.000Z" agent="Mozilla/5.0" version="21.6.8" type="device">
-  <diagram id="zepto-product-hunt-flow" name="Zepto Product Hunt User Flow">
-    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" background="#ffffff">
+<mxfile host="Electron" modified="2026-08-04T03:38:00.000Z" agent="Mozilla/5.0" version="21.6.8" type="device">
+  <diagram id="zepto-product-hunt-uml" name="Zepto Product Hunt UML Activity Flow">
+    <mxGraphModel dx="1200" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" background="#ffffff">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
 
         <!-- Title Header -->
-        <mxCell id="title" value="🎯 Zepto Product Hunt - AI Gameplay &amp; Purchase Loop User Flow" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontStyle=1;fontColor=#0C831F;" vertex="1" parent="1">
+        <mxCell id="title" value="🎯 Zepto Product Hunt - Official UML Activity Flow" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontStyle=1;fontColor=#0C831F;" vertex="1" parent="1">
           <mxGeometry x="280" y="20" width="600" height="40" as="geometry" />
         </mxCell>
 
-        <!-- STEP 1: Entry & Persona Initialization -->
-        <mxCell id="step1" value="1. Select Persona Profile&#xa;(e.g. Ananya, Arjun, Rohan, Priya)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dcfce7;strokeColor=#16a34a;fontStyle=1;fontSize=13;" vertex="1" parent="1">
-          <mxGeometry x="60" y="90" width="220" height="60" as="geometry" />
+        <!-- START NODE -->
+        <mxCell id="start_node" value="" style="ellipse;html=1;shape=startState;fillColor=#000000;strokeColor=#000000;" vertex="1" parent="1">
+          <mxGeometry x="565" y="80" width="30" height="30" as="geometry" />
         </mxCell>
 
-        <!-- STEP 2: Groq AI Clue 1 Generation -->
-        <mxCell id="step2" value="2. Backend Session Init&#xa;Groq AI generates Clue #1&#xa;(Cryptic / Less Helpful Riddle)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e0f2fe;strokeColor=#0284c7;fontStyle=1;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="340" y="90" width="220" height="60" as="geometry" />
+        <!-- STATE 1: Product Hunt Launched -->
+        <mxCell id="node_launched" value="Product Hunt Launched" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dcfce7;strokeColor=#16a34a;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="480" y="140" width="200" height="50" as="geometry" />
         </mxCell>
-
-        <!-- STEP 3: Home & Clue View -->
-        <mxCell id="step3" value="3. User Views Clue #1&#xa;Browses Adjacent Categories&#xa;(Fitness, Gourmet, Skincare...)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#d97706;fontStyle=1;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="620" y="90" width="220" height="60" as="geometry" />
-        </mxCell>
-
-        <!-- Connectors Top Row -->
-        <mxCell id="c1" edge="1" parent="1" source="step1" target="step2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;strokeColor=#16a34a;">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="c2" edge="1" parent="1" source="step2" target="step3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;strokeColor=#0284c7;">
+        <mxCell id="e_start" edge="1" parent="1" source="start_node" target="node_launched" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;strokeColor=#000000;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- DECISION: User Adds Item to Cart -->
-        <mxCell id="decision1" value="User Clicks&#xa;'ADD TO CART'&#xa;Is it Secret Hunt Target Product?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#f3e8ff;strokeColor=#9333ea;fontStyle=1;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="630" y="210" width="200" height="110" as="geometry" />
+        <!-- STATE 2: User Sees the Clue -->
+        <mxCell id="node_sees_clue" value="User Sees the Clue&#xa;(AI Riddle Clue #1)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fef3c7;strokeColor=#d97706;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="480" y="220" width="200" height="50" as="geometry" />
         </mxCell>
-
-        <mxCell id="c3" edge="1" parent="1" source="step3" target="decision1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;strokeColor=#d97706;">
+        <mxCell id="e_launched" edge="1" parent="1" source="node_launched" target="node_sees_clue" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;strokeColor=#16a34a;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- BRANCH A: YES - Secret Target Product -->
-        <mxCell id="target_yes" value="YES: Target Product Found!&#xa;• huntUnlocked = true (Permanent)&#xa;• Confetti Fires 🎉&#xa;• ₹50 OFF Coupon ACCZ50OFF Applied" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dcfce7;strokeColor=#16a34a;fontStyle=1;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="340" y="235" width="230" height="60" as="geometry" />
+        <!-- STATE 3: Adds a Product to Cart -->
+        <mxCell id="node_add_cart" value="Adds a Product to Cart" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e0f2fe;strokeColor=#0284c7;fontStyle=1;fontSize=13;" vertex="1" parent="1">
+          <mxGeometry x="480" y="300" width="200" height="50" as="geometry" />
         </mxCell>
-
-        <!-- BRANCH B: NO - Regular Product -->
-        <mxCell id="target_no" value="NO: Regular Product Added&#xa;• Standard Item Price&#xa;• Coupon remains in current state" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f1f5f9;strokeColor=#64748b;fontStyle=1;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="900" y="235" width="210" height="60" as="geometry" />
-        </mxCell>
-
-        <mxCell id="c_yes" edge="1" parent="1" source="decision1" target="target_yes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;strokeColor=#16a34a;">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="c_no" edge="1" parent="1" source="decision1" target="target_no" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;strokeColor=#64748b;">
+        <mxCell id="e_sees_clue" edge="1" parent="1" source="node_sees_clue" target="node_add_cart" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;strokeColor=#d97706;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- CART & CHECKOUT -->
-        <mxCell id="cart_view" value="Cart View&#xa;Review Items &amp; Bill Details&#xa;(ACCZ50OFF Applied if Unlocked)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fae8ff;strokeColor=#c026d3;fontStyle=1;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="620" y="370" width="220" height="60" as="geometry" />
+        <!-- DECISION 1: Is it Hunt Product? -->
+        <mxCell id="d_is_hunt" value="Is the Product&#xa;the Hunt Product?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#f3e8ff;strokeColor=#9333ea;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="490" y="380" width="180" height="90" as="geometry" />
         </mxCell>
-
-        <mxCell id="c_cart1" edge="1" parent="1" source="target_yes" target="cart_view" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;strokeColor=#16a34a;">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="c_cart2" edge="1" parent="1" source="target_no" target="cart_view" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;strokeColor=#64748b;">
+        <mxCell id="e_add_cart" edge="1" parent="1" source="node_add_cart" target="d_is_hunt" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;strokeColor=#0284c7;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
 
-        <!-- PROCEED TO PAY ACTION -->
-        <mxCell id="pay_action" value="User Clicks 'PROCEED TO PAY ⚡'&#xa;Order Completed &amp; Purchase History Updated" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dcfce7;strokeColor=#15803d;fontStyle=1;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="600" y="470" width="260" height="60" as="geometry" />
+        <!-- BRANCH 1: YES - User Wins Hunt & Gets Coupon -->
+        <mxCell id="node_win" value="🎉 User Wins the Hunt!&#xa;Gets Discount Coupon (ACCZ50OFF -₹50)&#xa;Confetti Triggered" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dcfce7;strokeColor=#15803d;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="190" y="395" width="240" height="60" as="geometry" />
         </mxCell>
-
-        <mxCell id="c_pay" edge="1" parent="1" source="cart_view" target="pay_action" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;strokeColor=#c026d3;">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-
-        <!-- LIVE GROQ AI GENERATION -->
-        <mxCell id="groq_live" value="⚡ Groq AI Live Generation Overlay&#xa;Model: llama-3.1-8b-instant (~180ms)&#xa;Generates Clue #2 / Clue #3 (More Helpful Hint)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffedd5;strokeColor=#ea580c;fontStyle=1;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="270" y="470" width="260" height="60" as="geometry" />
-        </mxCell>
-
-        <mxCell id="c_groq" edge="1" parent="1" source="pay_action" target="groq_live" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;strokeColor=#15803d;">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-
-        <!-- LOOP BACK TO HOME -->
-        <mxCell id="home_unlock" value="Land on Home Screen&#xa;🎉 Clue #2 / Clue #3 Unlocked!&#xa;(Same Target Product, Simpler Hint)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;fontStyle=1;fontSize=12;" vertex="1" parent="1">
-          <mxGeometry x="270" y="370" width="260" height="60" as="geometry" />
-        </mxCell>
-
-        <mxCell id="c_home" edge="1" parent="1" source="groq_live" target="home_unlock" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;strokeColor=#ea580c;">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-
-        <mxCell id="c_loop" edge="1" parent="1" source="home_unlock" target="step3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;strokeColor=#2563eb;entryX=0;entryY=0.5;entryDx=0;entryDy=0;">
+        <mxCell id="e_hunt_yes" edge="1" parent="1" source="d_is_hunt" target="node_win" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;strokeColor=#15803d;">
           <mxGeometry relative="1" as="geometry">
-            <Array points="180,400;180,120" />
+            <mxPoint x="490" y="425" as="sourcePoint" />
+            <mxPoint x="430" y="425" as="targetPoint" />
           </mxGeometry>
         </mxCell>
+        <mxCell id="l_yes" value="YES" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fontColor=#15803d;" vertex="1" parent="1">
+          <mxGeometry x="440" y="405" width="40" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- DECISION 2: NO - Does User Buy the Product? -->
+        <mxCell id="d_buys_prod" value="Does User Buy&#xa;the Product?&#xa;(Proceeds to Pay)" style="rhombus;whiteSpace=wrap;html=1;fillColor=#ffedd5;strokeColor=#ea580c;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="730" y="380" width="180" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="e_hunt_no" edge="1" parent="1" source="d_is_hunt" target="d_buys_prod" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;strokeColor=#ea580c;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="l_no" value="NO" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fontColor=#ea580c;" vertex="1" parent="1">
+          <mxGeometry x="680" y="405" width="40" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- BRANCH 2: YES (Buys Product) -> New Easier Clue Unlocked -->
+        <mxCell id="node_easier_clue" value="⚡ New Clue is Unlocked&#xa;That is More Easier!&#xa;(Groq LLM Generates Clue 2/3)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dbeafe;strokeColor=#2563eb;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="715" y="520" width="210" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="e_buy_yes" edge="1" parent="1" source="d_buys_prod" target="node_easier_clue" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;strokeColor=#2563eb;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="l_buy_yes" value="YES" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fontColor=#2563eb;" vertex="1" parent="1">
+          <mxGeometry x="830" y="480" width="40" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Connect New Easier Clue back to "User Sees the Clue" -->
+        <mxCell id="e_loop_back" edge="1" parent="1" source="node_easier_clue" target="node_sees_clue" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;strokeColor=#2563eb;">
+          <mxGeometry relative="1" as="geometry">
+            <Array points="960,550;960,245" />
+          </mxGeometry>
+        </mxCell>
+
+        <!-- BRANCH 3: NO (Does NOT Buy Product) -> Else Nothing Happens -->
+        <mxCell id="node_nothing" value="🛑 Else Nothing Happens&#xa;(Stays in Cart / Browsing State)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f1f5f9;strokeColor=#64748b;fontStyle=1;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="485" y="520" width="190" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="e_buy_no" edge="1" parent="1" source="d_buys_prod" target="node_nothing" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;strokeColor=#64748b;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="l_buy_no" value="NO" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fontColor=#64748b;" vertex="1" parent="1">
+          <mxGeometry x="700" y="480" width="40" height="20" as="geometry" />
+        </mxCell>
+
+        <!-- Connect "Else Nothing Happens" back to "Adds a Product to Cart" -->
+        <mxCell id="e_nothing_loop" edge="1" parent="1" source="node_nothing" target="node_add_cart" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeWidth=2;strokeColor=#64748b;">
+          <mxGeometry relative="1" as="geometry">
+            <Array points="450,550;450,325" />
+          </mxGeometry>
+        </mxCell>
+
       </root>
     </mxGraphModel>
   </diagram>
